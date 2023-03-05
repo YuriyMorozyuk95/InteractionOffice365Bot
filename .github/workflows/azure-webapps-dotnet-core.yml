@@ -8,6 +8,10 @@ on:
     branches:
       - main
   workflow_dispatch:
+  
+env:
+  AZURE_WEBAPP_NAME: 'IOB-WebApi'
+  AZURE_WEBAPP_PACKAGE_PATH: "./publish"
 
 jobs:
   build:
@@ -26,13 +30,13 @@ jobs:
         run: dotnet build src/InteractionOfficeBot.sln --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish src/InteractionOfficeBot.sln -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish src/InteractionOfficeBot.sln -c Release -o ${{ AZURE_WEBAPP_PACKAGE_PATH }}
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: $${{ AZURE_WEBAPP_PACKAGE_PATH }}
 
   deploy:
     runs-on: windows-latest
@@ -51,7 +55,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'IOB-WebApi'
+          app-name: ${{ AZURE_WEBAPP_NAME }}
           slot-name: 'production'
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_d813066ba7904ece94e5ded7125f22f8 }}
-          package: .
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ${{ AZURE_WEBAPP_PACKAGE_PATH }}
