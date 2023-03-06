@@ -1,4 +1,4 @@
-﻿using InteractionOfficeBot.Console.Helpers;
+﻿using InteractionOfficeBot.Core.MsGraph;
 using Microsoft.Identity.Client;
 using Microsoft.Graph;
 using Microsoft.Extensions.Configuration;

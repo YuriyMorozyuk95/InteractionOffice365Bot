@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InteractionOfficeBot.WebApi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Console", "..\InteractionOfficeBot.Console\InteractionOfficeBot.Console.csproj", "{E4E4759D-F77E-4653-8217-31ECADB9EC86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Core", "..\InteractionOfficeBot.Core\InteractionOfficeBot.Core.csproj", "{8E8B57D5-D237-4447-9645-9B7C352D6C3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{E4E4759D-F77E-4653-8217-31ECADB9EC86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4E4759D-F77E-4653-8217-31ECADB9EC86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4E4759D-F77E-4653-8217-31ECADB9EC86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E8B57D5-D237-4447-9645-9B7C352D6C3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E8B57D5-D237-4447-9645-9B7C352D6C3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E8B57D5-D237-4447-9645-9B7C352D6C3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E8B57D5-D237-4447-9645-9B7C352D6C3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
