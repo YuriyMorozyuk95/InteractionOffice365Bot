@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InteractionOfficeBot.WebApi", "InteractionOfficeBot.WebApi.csproj", "{BF151DD6-19D9-4205-B6A4-0E442641DE36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InteractionOfficeBot.WebApi", "InteractionOfficeBot.WebApi\InteractionOfficeBot.WebApi.csproj", "{BF151DD6-19D9-4205-B6A4-0E442641DE36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Console", "..\InteractionOfficeBot.Console\InteractionOfficeBot.Console.csproj", "{E4E4759D-F77E-4653-8217-31ECADB9EC86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Console", "InteractionOfficeBot.Console\InteractionOfficeBot.Console.csproj", "{E4E4759D-F77E-4653-8217-31ECADB9EC86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Core", "..\InteractionOfficeBot.Core\InteractionOfficeBot.Core.csproj", "{8E8B57D5-D237-4447-9645-9B7C352D6C3E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InteractionOfficeBot.Core", "InteractionOfficeBot.Core\InteractionOfficeBot.Core.csproj", "{8E8B57D5-D237-4447-9645-9B7C352D6C3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
