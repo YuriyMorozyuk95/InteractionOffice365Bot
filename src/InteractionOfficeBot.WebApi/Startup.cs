@@ -1,4 +1,5 @@
-﻿using InteractionOfficeBot.WebApi.Bots;
+﻿using InteractionOfficeBot.Core.MsGraph;
+using InteractionOfficeBot.WebApi.Bots;
 using InteractionOfficeBot.WebApi.Dialogs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -19,6 +20,8 @@ namespace InteractionOfficeBot.WebApi
             {
                 options.SerializerSettings.MaxDepth = HttpHelper.BotMessageSerializerSettings.MaxDepth;
             });
+
+            services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();
 
             // Create the Bot Framework Authentication to be used with the Bot Adapter.
             services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();

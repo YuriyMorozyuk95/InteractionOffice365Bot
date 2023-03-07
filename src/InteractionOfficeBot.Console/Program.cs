@@ -1,26 +1,23 @@
 ﻿using InteractionOfficeBot.Core.MsGraph;
-using Microsoft.Identity.Client;
-using Microsoft.Graph;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InteractionOfficeBot.Console
 {
 	public class Program
 	{
-		private static GraphServiceClient? _graphClient;
-
 		public static async Task Main(string[] args)
 		{
-			System.Console.WriteLine("Hello World!");
-
 			var config = LoadAppSettings();
 			if (config == null)
 			{
 				System.Console.WriteLine("Invalid appsettings.json file.");
 				return;
 			}
+			var serviceProvider = CreateServiceProvider();
 
-			var client = GetAuthenticatedGraphClient(config);
+			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
+			var client = factory.CreateClientFromApplicationBeHalf(config);
 
 			var graphRequest = client.Users
 				.Request()
@@ -62,29 +59,13 @@ namespace InteractionOfficeBot.Console
 			}
 		}
 
-		private static IAuthenticationProvider CreateAuthorizationProvider(IConfigurationRoot config)
+		private static IServiceProvider CreateServiceProvider()
 		{
-			var clientId = config["applicationId"];
-			var clientSecret = config["applicationSecret"];
-			var redirectUri = config["redirectUri"];
-			var authority = $"https://login.microsoftonline.com/{config["tenantId"]}/v2.0";
+			var services = new ServiceCollection();
 
-			List<string> scopes = new List<string>();
-			scopes.Add("https://graph.microsoft.com/.default");
+			services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();
 
-			var cca = ConfidentialClientApplicationBuilder.Create(clientId)
-													.WithAuthority(authority)
-													.WithRedirectUri(redirectUri)
-													.WithClientSecret(clientSecret)
-													.Build();
-			return new MsalAuthenticationProvider(cca, scopes.ToArray());
-		}
-
-		private static GraphServiceClient GetAuthenticatedGraphClient(IConfigurationRoot config)
-		{
-			var authenticationProvider = CreateAuthorizationProvider(config);
-			_graphClient = new GraphServiceClient(authenticationProvider);
-			return _graphClient;
+			return services.BuildServiceProvider();
 		}
 	}
 }
