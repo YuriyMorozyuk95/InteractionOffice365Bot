@@ -81,6 +81,17 @@ namespace InteractionOfficeBot.WebApi
             return me;
         }
 
+        // Get information about the user.
+        public Task<IGraphServiceUsersCollectionPage> GetUsers()
+        {
+	        var graphClient = GetAuthenticatedClient();
+	        var graphRequest = graphClient.Users
+		        .Request()
+		        .Select(u => new { u.DisplayName, u.Mail });
+
+	        return graphRequest.GetAsync();
+        }
+
         // gets information about the user's manager.
         public async Task<User> GetManagerAsync()
         {

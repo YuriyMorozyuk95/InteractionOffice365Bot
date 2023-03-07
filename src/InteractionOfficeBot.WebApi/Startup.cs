@@ -1,6 +1,8 @@
 ﻿using InteractionOfficeBot.Core.MsGraph;
 using InteractionOfficeBot.WebApi.Bots;
 using InteractionOfficeBot.WebApi.Dialogs;
+using InteractionOfficeBot.WebApi.Services;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
@@ -23,6 +25,9 @@ namespace InteractionOfficeBot.WebApi
 
             services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();
 
+            // Create an instance of the state service 
+            services.AddSingleton<IStateService, StateService>();
+
             // Create the Bot Framework Authentication to be used with the Bot Adapter.
             services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();
 
@@ -32,21 +37,6 @@ namespace InteractionOfficeBot.WebApi
             // Create the storage we'll be using for User and Conversation state, as well as Single Sign On.
             // (Memory is great for testing purposes.)
             services.AddSingleton<IStorage, MemoryStorage>();
-
-            // For SSO, use CosmosDbPartitionedStorage
-
-            /* COSMOSDB STORAGE - Uncomment the code in this section to use CosmosDB storage */
-
-            // var cosmosDbStorageOptions = new CosmosDbPartitionedStorageOptions()
-            // {
-            //     CosmosDbEndpoint = "<endpoint-for-your-cosmosdb-instance>",
-            //     AuthKey = "<your-cosmosdb-auth-key>",
-            //     DatabaseId = "<your-database-id>",
-            //     ContainerId = "<cosmosdb-container-id>"
-            // };
-            // var storage = new CosmosDbPartitionedStorage(cosmosDbStorageOptions);
-
-            /* END COSMOSDB STORAGE */
 
             // Create the User state. (Used in this bot's Dialog implementation.)
             services.AddSingleton<UserState>();

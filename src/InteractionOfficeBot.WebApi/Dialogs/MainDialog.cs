@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using InteractionOfficeBot.WebApi.Services;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
@@ -11,11 +12,13 @@ namespace InteractionOfficeBot.WebApi.Dialogs
     public class MainDialog : LogoutDialog
     {
         protected readonly ILogger Logger;
+        private readonly IStateService _stateService;
 
-        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger)
+        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService)
             : base(nameof(MainDialog), configuration["ConnectionName"])
         {
             Logger = logger;
+            _stateService = stateService;
 
             AddDialog(new OAuthPrompt(
                 nameof(OAuthPrompt),
@@ -28,14 +31,13 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                     EndOnInvalidMessage = true
                 }));
 
-            AddDialog(new ConfirmPrompt(nameof(ConfirmPrompt)));
+            AddDialog(new TextPrompt(nameof(TextPrompt)));
 
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
                 PromptStepAsync,
                 LoginStepAsync,
-                DisplayTokenPhase1Async,
-                DisplayTokenPhase2Async,
+                GraphActionStep,
             }));
 
             // The initial child Dialog to run.
@@ -54,49 +56,45 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             var tokenResponse = (TokenResponse)stepContext.Result;
             if (tokenResponse?.Token != null)
             {
+	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+	            userTokeStore.Token = tokenResponse.Token;
+	            await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
+
+
                 // Pull in the data from the Microsoft Graph.
+                //TODO Try Put GraphClient to UserTokenStore
                 var client = new SimpleGraphClient(tokenResponse.Token);
                 var me = await client.GetMeAsync();
                 var title = !string.IsNullOrEmpty(me.JobTitle) ?
                             me.JobTitle : "Unknown";
 
-                //TODO
-				//await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}", cancellationToken: cancellationToken);
+				await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}", cancellationToken: cancellationToken);
 
-                return await stepContext.PromptAsync(nameof(ConfirmPrompt), new PromptOptions { Prompt = MessageFactory.Text("Would you like to view your token?") }, cancellationToken);
+                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
 
-        private async Task<DialogTurnResult> DisplayTokenPhase1Async(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text("Thank you."), cancellationToken);
+            var result = (string)stepContext.Result;
 
-            var result = (bool)stepContext.Result;
-            if (result)
+            //TODO add const
+            if (result == "show me all users")
             {
-                // Call the prompt again because we need the token. The reasons for this are:
-                // 1. If the user is already logged in we do not need to store the token locally in the bot and worry
-                // about refreshing it. We can always just call the prompt again to get the token.
-                // 2. We never know how long it will take a user to respond. By the time the
-                // user responds the token may have expired. The user would then be prompted to login again.
-                //
-                // There is no reason to store the token locally in the bot because we can always just call
-                // the OAuth prompt to get the token or get a new token if needed.
-                return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), cancellationToken: cancellationToken);
-            }
+	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+	            var client = new SimpleGraphClient(userTokeStore.Token);
 
-            return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-        }
+	           var users = await client.GetUsers();
 
-        private async Task<DialogTurnResult> DisplayTokenPhase2Async(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            var tokenResponse = (TokenResponse)stepContext.Result;
-            if (tokenResponse != null)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Here is your token {tokenResponse.Token}"), cancellationToken);
+	           foreach (var user in users)
+	           {
+		           var userInfo = user.Id + ": " + user.DisplayName + " <" + user.Mail + ">";
+		           await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+	           }
+
             }
 
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
