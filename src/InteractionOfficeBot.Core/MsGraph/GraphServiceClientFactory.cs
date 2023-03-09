@@ -7,13 +7,19 @@ namespace InteractionOfficeBot.Core.MsGraph
 {
 	public interface IGraphServiceClientFactory
 	{
-		GraphServiceClient CreateClientFromUserBeHalf(string token);
-		GraphServiceClient CreateClientFromApplicationBeHalf(IConfigurationRoot configuration);
+		IobGraphClient CreateClientFromUserBeHalf(string token);
+		IobGraphClient CreateClientFromApplicationBeHalf();
 	}
 
 	public class GraphServiceClientFactory : IGraphServiceClientFactory
 	{
-		public GraphServiceClient CreateClientFromUserBeHalf(string token)
+		private readonly IConfiguration _configuration;
+
+		public GraphServiceClientFactory(IConfiguration configuration)
+		{
+			_configuration = configuration;
+		}
+        public IobGraphClient CreateClientFromUserBeHalf(string token)
 		{
 			var graphClient = new GraphServiceClient(
 				new DelegateAuthenticationProvider(
@@ -27,23 +33,23 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 						return Task.CompletedTask;
 					}));
-			return graphClient;
+			return new IobGraphClient(graphClient);
 		}
 
-        public GraphServiceClient CreateClientFromApplicationBeHalf(IConfigurationRoot configuration)
+        public IobGraphClient CreateClientFromApplicationBeHalf()
 		{
-			var authenticationProvider = CreateAuthorizationProviderFromApplicationBeHalf(configuration);
+			var authenticationProvider = CreateAuthorizationProviderFromApplicationBeHalf();
 			var graphClient = new GraphServiceClient(authenticationProvider);
 
-			return graphClient;
+			return new IobGraphClient(graphClient);
 		}
 
-		private IAuthenticationProvider CreateAuthorizationProviderFromApplicationBeHalf(IConfigurationRoot config)
+		private IAuthenticationProvider CreateAuthorizationProviderFromApplicationBeHalf()
 		{
-			var clientId = config["applicationId"];
-			var clientSecret = config["applicationSecret"];
-			var redirectUri = config["redirectUri"];
-			var authority = $"https://login.microsoftonline.com/{config["tenantId"]}/v2.0";
+			var clientId = _configuration["applicationId"];
+			var clientSecret = _configuration["applicationSecret"];
+			var redirectUri = _configuration["redirectUri"];
+			var authority = $"https://login.microsoftonline.com/{_configuration["tenantId"]}/v2.0";
 
 			List<string> scopes = new List<string>();
 			scopes.Add("https://graph.microsoft.com/.default");

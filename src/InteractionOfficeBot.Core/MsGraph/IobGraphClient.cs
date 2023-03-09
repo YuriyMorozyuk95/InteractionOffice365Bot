@@ -1,22 +1,15 @@
-﻿using System.Net.Http.Headers;
-using Microsoft.Graph;
+﻿using Microsoft.Graph;
 
-namespace InteractionOfficeBot.WebApi
+namespace InteractionOfficeBot.Core.MsGraph
 {
 	// This class is a wrapper for the Microsoft Graph API
-	// See: https://developer.microsoft.com/en-us/graph
-	public class SimpleGraphClient
+	public class IobGraphClient
     {
-        private readonly string _token;
+	    private readonly GraphServiceClient _graphClient;
 
-        public SimpleGraphClient(string token)
+        public IobGraphClient(GraphServiceClient graphServiceClient)
         {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                throw new ArgumentNullException(nameof(token));
-            }
-
-            _token = token;
+	        _graphClient = graphServiceClient;
         }
 
         // Sends an email on the users behalf using the Microsoft Graph API
@@ -37,7 +30,6 @@ namespace InteractionOfficeBot.WebApi
                 throw new ArgumentNullException(nameof(content));
             }
 
-            var graphClient = GetAuthenticatedClient();
             var recipients = new List<Recipient>
             {
                 new Recipient
@@ -62,30 +54,27 @@ namespace InteractionOfficeBot.WebApi
             };
 
             // Send the message.
-            await graphClient.Me.SendMail(email, true).Request().PostAsync();
+            await _graphClient.Me.SendMail(email, true).Request().PostAsync();
         }
 
         // Gets mail for the user using the Microsoft Graph API
         public async Task<Message[]> GetRecentMailAsync()
         {
-            var graphClient = GetAuthenticatedClient();
-            var messages = await graphClient.Me.MailFolders.Inbox.Messages.Request().GetAsync();
+            var messages = await _graphClient.Me.MailFolders.Inbox.Messages.Request().GetAsync();
             return messages.Take(5).ToArray();
         }
 
         // Get information about the user.
         public async Task<User> GetMeAsync()
         {
-            var graphClient = GetAuthenticatedClient();
-            var me = await graphClient.Me.Request().GetAsync();
+            var me = await _graphClient.Me.Request().GetAsync();
             return me;
         }
 
         // Get information about the user.
         public Task<IGraphServiceUsersCollectionPage> GetUsers()
         {
-	        var graphClient = GetAuthenticatedClient();
-	        var graphRequest = graphClient.Users
+	        var graphRequest = _graphClient.Users
 		        .Request()
 		        .Select(u => new { u.DisplayName, u.Mail });
 
@@ -95,8 +84,7 @@ namespace InteractionOfficeBot.WebApi
         // gets information about the user's manager.
         public async Task<User> GetManagerAsync()
         {
-            var graphClient = GetAuthenticatedClient();
-            var manager = await graphClient.Me.Manager.Request().GetAsync() as User;
+            var manager = await _graphClient.Me.Manager.Request().GetAsync() as User;
             return manager;
         }
 
@@ -133,23 +121,5 @@ namespace InteractionOfficeBot.WebApi
         //         return photoResponse;
         //     }
         // }
-
-        // Get an Authenticated Microsoft Graph client using the token issued to the user.
-        private GraphServiceClient GetAuthenticatedClient()
-        {
-            var graphClient = new GraphServiceClient(
-                new DelegateAuthenticationProvider(
-                    requestMessage =>
-                    {
-                        // Append the access token to the request.
-                        requestMessage.Headers.Authorization = new AuthenticationHeaderValue("bearer", _token);
-
-                        // Get event times in the current time zone.
-                        requestMessage.Headers.Add("Prefer", "outlook.timezone=\"" + TimeZoneInfo.Local.Id + "\"");
-
-                        return Task.CompletedTask;
-                    }));
-            return graphClient;
-        }
     }
 }

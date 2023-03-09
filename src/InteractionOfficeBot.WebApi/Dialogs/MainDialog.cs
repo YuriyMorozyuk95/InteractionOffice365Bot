@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using InteractionOfficeBot.Core.MsGraph;
 using InteractionOfficeBot.WebApi.Services;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
@@ -11,14 +12,18 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 {
     public class MainDialog : LogoutDialog
     {
-        protected readonly ILogger Logger;
-        private readonly IStateService _stateService;
+	    private const string ALL_USER_REQUEST = "show me all users";
 
-        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService)
+	    private readonly ILogger _logger;
+        private readonly IStateService _stateService;
+        private readonly IGraphServiceClientFactory _graphServiceClient;
+
+        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService, IGraphServiceClientFactory graphServiceClient)
             : base(nameof(MainDialog), configuration["ConnectionName"])
         {
-            Logger = logger;
+            _logger = logger;
             _stateService = stateService;
+            _graphServiceClient = graphServiceClient;
 
             AddDialog(new OAuthPrompt(
                 nameof(OAuthPrompt),
@@ -63,7 +68,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
                 // Pull in the data from the Microsoft Graph.
                 //TODO Try Put GraphClient to UserTokenStore
-                var client = new SimpleGraphClient(tokenResponse.Token);
+                var client =  _graphServiceClient.CreateClientFromUserBeHalf(tokenResponse.Token);
                 var me = await client.GetMeAsync();
                 var title = !string.IsNullOrEmpty(me.JobTitle) ?
                             me.JobTitle : "Unknown";
@@ -77,15 +82,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
 
-        private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+
+		private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             var result = (string)stepContext.Result;
 
             //TODO add const
-            if (result == "show me all users")
+            if (result == ALL_USER_REQUEST)
             {
 	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-	            var client = new SimpleGraphClient(userTokeStore.Token);
+	            var client =  _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
 	           var users = await client.GetUsers();
 
