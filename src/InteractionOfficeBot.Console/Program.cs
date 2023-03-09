@@ -2,7 +2,6 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Graph.ExternalConnectors;
 
 namespace InteractionOfficeBot.Console
 {

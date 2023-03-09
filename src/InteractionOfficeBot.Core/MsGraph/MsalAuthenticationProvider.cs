@@ -21,7 +21,7 @@ namespace InteractionOfficeBot.Core.MsGraph
             request.Headers.Authorization = new AuthenticationHeaderValue("bearer", token);
         }
 
-        public async Task<string> GetTokenAsync()
+        private async Task<string> GetTokenAsync()
         {
             var authResult = await _clientApplication.AcquireTokenForClient(_scopes).ExecuteAsync();
             return authResult.AccessToken;

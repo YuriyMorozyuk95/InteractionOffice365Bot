@@ -82,7 +82,7 @@ namespace InteractionOfficeBot.Core.MsGraph
         }
 
         // gets information about the user's manager.
-        public async Task<User> GetManagerAsync()
+        public async Task<User?> GetManagerAsync()
         {
             var manager = await _graphClient.Me.Manager.Request().GetAsync() as User;
             return manager;

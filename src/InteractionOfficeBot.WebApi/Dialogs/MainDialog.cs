@@ -97,7 +97,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 	           foreach (var user in users)
 	           {
-		           var userInfo = user.Id + ": " + user.DisplayName + " <" + user.Mail + ">";
+		           var userInfo = user.DisplayName + " <" + user.Mail + ">";
 		           await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 	           }
 
