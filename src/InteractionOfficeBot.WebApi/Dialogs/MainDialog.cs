@@ -87,23 +87,26 @@ namespace InteractionOfficeBot.WebApi.Dialogs
         {
             var result = (string)stepContext.Result;
 
-            //TODO add const
-            if (result == ALL_USER_REQUEST)
-            {
-	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-	            var client =  _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+			if (result == ALL_USER_REQUEST)
+			{
+				await ShowAllUsers(stepContext, cancellationToken);
+			}
 
-	           var users = await client.GetUsers();
-
-	           foreach (var user in users)
-	           {
-		           var userInfo = user.DisplayName + " <" + user.Mail + ">";
-		           await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
-	           }
-
-            }
-
-            return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
+
+		private async Task ShowAllUsers(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			var users = await client.GetUsers();
+
+			foreach (var user in users)
+			{
+				var userInfo = user.DisplayName + " <" + user.Mail + ">";
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+			}
+		}
     }
 }
