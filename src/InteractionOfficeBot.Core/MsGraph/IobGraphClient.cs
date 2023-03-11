@@ -229,5 +229,28 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 			return channels;
 		}
+
+		public async Task CreateChannelForTeam(string teamName, string chanelName)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			var requestBody = new Channel
+			{
+				DisplayName = chanelName,
+				MembershipType = ChannelMembershipType.Standard,
+			};
+
+			var channels = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels
+				.Request()
+				.AddAsync(requestBody);
+		}
     }
 }

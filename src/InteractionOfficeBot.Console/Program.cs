@@ -16,7 +16,7 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			await WriteChannelList(client);
+			await client.Teams.CreateChannelForTeam("test1", "test1");
 
 			System.Console.ReadKey();
 		}
