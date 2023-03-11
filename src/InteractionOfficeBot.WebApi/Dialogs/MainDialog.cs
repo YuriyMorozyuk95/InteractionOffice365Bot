@@ -75,6 +75,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             if (tokenResponse?.Token != null)
             {
 	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+	            //TODO check for expiration token, and set userTokeStore to null if it become expiry, after that set the flag to ingore showing info about user
+	            
 	            userTokeStore.Token = tokenResponse.Token;
 	            await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
 
@@ -135,9 +137,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("Can I help you with something else?"), cancellationToken);
 
-			return await stepContext.BeginDialogAsync(GraphDialog, null, cancellationToken);
-			//return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-        }
+			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
 		{
