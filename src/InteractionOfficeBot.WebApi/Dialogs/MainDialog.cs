@@ -136,44 +136,96 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
 
-		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel, string helloWorld)
+		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			await client.Teams.SendMessageToChanel(teamName, channelName, message);
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
 		}
 
-		private async Task RemoveTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
+		private async Task RemoveTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			await client.Teams.RemoveTeam(teamName);
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} was removed"), cancellationToken);
 		}
 
-		private async Task RemoveChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		private async Task RemoveChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			await client.Teams.RemoveChannelFromTeam(teamName, channelName);
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was removed"), cancellationToken);
 		}
 
-		private async Task MemberOfChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		private async Task MemberOfChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			var users = await client.Teams.GetMembersOfChannelFromTeam(teamName, channelName);
+
+			foreach (var user in users)
+			{
+				var userInfo = user.DisplayName;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+			}
 		}
 
-		private async Task CreateChanelForTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		private async Task CreateChanelForTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			await client.Teams.CreateChannelForTeam(teamName, channelName);
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was created"), cancellationToken);
 		}
 
-		private async Task CreateTeamFor(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string victoriaBpskqOnmicrosoftCom)
+		private async Task CreateTeamFor(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string userEmail)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			await client.Teams.CreateTeamFor(teamName, userEmail);
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} for {userEmail} was created"), cancellationToken);
 		}
 
-		private async Task ChanelOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
+		private async Task ChanelOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			var channels = await client.Teams.GetChannelsOfTeams(teamName);
+
+			foreach (var channel in channels)
+			{
+				var chanelInfo = channel.DisplayName + " Link: "+ channel.WebUrl;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(chanelInfo), cancellationToken);
+			}
 		}
 
 		private async Task MemeberOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
 		{
-			throw new System.NotImplementedException();
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			var users = await client.Teams.GetMembersOfTeams(testTeam);
+
+			foreach (var user in users)
+			{
+				var userInfo = user.DisplayName;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+			}
 		}
 
 		private async Task ShowAllTeams(WaterfallStepContext stepContext, CancellationToken cancellationToken)
@@ -181,12 +233,12 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var users = await client.Teams.GetListTeams();
+			var teams = await client.Teams.GetListTeams();
 
-			foreach (var user in users)
+			foreach (var team in teams)
 			{
-				var userInfo = user.DisplayName + " <" + user.Mail + ">";
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+				var teamInfo = team.DisplayName + "Description: " + team.Description;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(teamInfo), cancellationToken);
 			}
 		}
 
