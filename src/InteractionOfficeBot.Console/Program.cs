@@ -14,14 +14,38 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			var users =  await client.GetUsers();
+			//await WriteLineUserList(client);
+			//await CreateTeams(client);
+			await WriteTeamsList(client);
+
+			System.Console.ReadKey();
+		}
+
+
+		private static async Task CreateTeams(IobGraphClient client)
+		{
+			var user = await client.GetMyUsers();
+			await client.TeamsGroup.Create(user);
+		}
+
+		private static async Task WriteTeamsList(IobGraphClient client)
+		{
+			var teams = await client.TeamsGroup.List();
+
+			foreach (var team in teams)
+			{
+				System.Console.WriteLine(team.Id + ": " + team.DisplayName);
+			}
+		}
+
+		private static async Task WriteLineUserList(IobGraphClient client)
+		{
+			var users = await client.GetUsers();
 
 			foreach (var user in users)
 			{
 				System.Console.WriteLine(user.Id + ": " + user.DisplayName + " <" + user.Mail + ">");
 			}
-
-			System.Console.ReadKey();
 		}
 
 		private static IConfigurationRoot LoadAppSettings()
