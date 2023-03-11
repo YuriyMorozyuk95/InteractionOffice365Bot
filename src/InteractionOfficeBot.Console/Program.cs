@@ -14,9 +14,7 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			//await WriteLineUserList(client);
-			//await CreateTeams(client);
-			await WriteTeamsList(client);
+			var teams = await client.Client.Teams.Request().Filter("startswith(displayName,%20'A')").Top(1).GetAsync();
 
 			System.Console.ReadKey();
 		}
@@ -24,13 +22,12 @@ namespace InteractionOfficeBot.Console
 
 		private static async Task CreateTeams(IobGraphClient client)
 		{
-			var user = await client.GetMyUsers();
-			await client.TeamsGroup.Create(user);
+			await client.TeamsGroup.CreateTeamFor("test1", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
 		}
 
 		private static async Task WriteTeamsList(IobGraphClient client)
 		{
-			var teams = await client.TeamsGroup.List();
+			var teams = await client.TeamsGroup.GetListTeams();
 
 			foreach (var team in teams)
 			{

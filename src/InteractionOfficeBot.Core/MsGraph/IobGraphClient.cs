@@ -14,6 +14,8 @@ namespace InteractionOfficeBot.Core.MsGraph
 	        _graphClient = graphServiceClient;
         }
 
+        public GraphServiceClient Client => _graphClient;
+
         public TeamsGroupRepository TeamsGroup
         {
 	        get { return _teamsGroupRepository ??= new TeamsGroupRepository(_graphClient); }
@@ -145,42 +147,22 @@ namespace InteractionOfficeBot.Core.MsGraph
 			_graphServiceClient = graphServiceClient;
 		}
 
-
-
-		public Task<IGraphServiceGroupsCollectionPage> List()
+		public Task<IGraphServiceGroupsCollectionPage> GetListTeams()
 		{
 			var graphRequest = _graphServiceClient.Groups
 				.Request()
-				.Filter("resourceProvisioningOptions/Any(x:x eq 'Team')")
-				.Select(x => new { x.DisplayName, x.Id });
+				.Filter("resourceProvisioningOptions/Any(x:x eq 'Team')");
 
 			return graphRequest.GetAsync();
 		}
 
-		public async Task Create(User user = null)
+		public async Task CreateTeamFor(string teamName, string userEmail)
 		{
-			user ??= await _graphServiceClient.Me.Request().GetAsync();
-
-			var groupRequestBody = new Group
-			{
-				Description = "Self help community for library 2",
-				DisplayName = "Library Assist",
-				GroupTypes = new List<string>
-				{
-					"Unified",
-				},
-				MailEnabled = true,
-				MailNickname = "library",
-				SecurityEnabled = false,
-			};
-
-			//var groupRequest = await _graphServiceClient.Groups.Request().AddAsync(groupRequestBody);
+			var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
 
 			var requestBody = new Team
 			{
-                //Group = groupRequestBody,
-				DisplayName = "Architecture Team 3",
-				Description = "The team for those in architecture design.",
+				DisplayName = teamName,
 				AdditionalData = new Dictionary<string, object>
 				{
 					{
@@ -191,7 +173,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 				{  
 					new AadUserConversationMember  
 					{  
-						Roles = new List<String>()  
+						Roles = new List<string>()  
 						{  
 							"owner"  
 						},  
@@ -206,6 +188,12 @@ namespace InteractionOfficeBot.Core.MsGraph
 			var result = await _graphServiceClient.Teams
 				.Request()
 				.AddAsync(requestBody);
+		}
+
+		public async Task GetListOfChannels(string teamName, string userEmail)
+		{
+
+			
 		}
     }
 }
