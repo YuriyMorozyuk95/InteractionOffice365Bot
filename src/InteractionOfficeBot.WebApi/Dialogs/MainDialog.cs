@@ -15,10 +15,10 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string ALL_USER_REQUEST = "Show me all users";
 	    private const string ALL_TEAMS_REQUEST = "Show all teams in organization";
 	    private const string WHO_OF_TEAMS_REQUEST = "Who is on the team: 'Test Team'?";
-	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team: 'Test Team'?";
-	    private const string CREATE_TEAM = "Please create team: 'Test Team' for user: 'victoria@8bpskq.onmicrosoft.com'?";
-	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team: 'Test Team'?";
-	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'";
+	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team:'Test Team'?";
+	    private const string CREATE_TEAM = "Please create team:'Test Team' for user:'victoria@8bpskq.onmicrosoft.com'.";
+	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team:'Test Team'.";
+	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'?";
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
 	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team'";
@@ -87,7 +87,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 				await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}", cancellationToken: cancellationToken);
 
-                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
+                return await stepContext.PromptAsync(GraphDialog, new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
