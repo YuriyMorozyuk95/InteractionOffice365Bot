@@ -1,17 +1,22 @@
 ﻿using System;
-using System.Net.Http;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Builder.Teams;
 using Microsoft.Bot.Builder.TraceExtensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 
 namespace InteractionOfficeBot.WebApi
 {
     public class AdapterWithErrorHandler : CloudAdapter
     {
-        public AdapterWithErrorHandler(IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<IBotFrameworkHttpAdapter> logger, IStorage storage, ConversationState conversationState)
+        public AdapterWithErrorHandler(
+	        IConfiguration configuration,
+	        IHttpClientFactory httpClientFactory,
+	        ILogger<IBotFrameworkHttpAdapter> logger,
+	        IStorage storage,
+	        ConversationState conversationState)
             : base(configuration, httpClientFactory, logger)
         {
             if (configuration.GetValue<bool>("UseSingleSignOn"))
@@ -26,9 +31,11 @@ namespace InteractionOfficeBot.WebApi
                 // Azure Application Insights. Visit https://aka.ms/bottelemetry to see how
                 // to add telemetry capture to your bot.
                 logger.LogError(exception, $"[OnTurnError] unhandled error : {exception.Message}");
+				await turnContext.SendActivityAsync(MessageFactory.Text(exception.ToString()));
 
-                // Uncomment below commented line for local debugging.
-                // await turnContext.SendActivityAsync($"Sorry, it looks like something went wrong. Exception Caught: {exception.Message}");
+
+				// Uncomment below commented line for local debugging.
+				// await turnContext.SendActivityAsync($"Sorry, it looks like something went wrong. Exception Caught: {exception.Message}");
 
                 if (conversationState != null)
                 {

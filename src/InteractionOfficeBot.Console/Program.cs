@@ -2,6 +2,8 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Directory = System.IO.Directory;
+
 
 namespace InteractionOfficeBot.Console
 {
@@ -14,14 +16,45 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			var users =  await client.GetUsers();
+			await client.Teams.SendMessageToChanel("Retail", "General", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
+
+			System.Console.ReadKey();
+		}
+
+
+		private static async Task CreateTeams(IobGraphClient client)
+		{
+			await client.Teams.CreateTeamFor("test1", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
+		}
+
+		private static async Task WriteTeamsList(IobGraphClient client)
+		{
+			var teams = await client.Teams.GetListTeams();
+
+			foreach (var team in teams)
+			{
+				System.Console.WriteLine(team.Id + ": " + team.DisplayName);
+			}
+		}
+
+		private static async Task WriteChannelList(IobGraphClient client)
+		{
+			var teams = await client.Teams.GetChannelsOfTeams("test1");
+
+			foreach (var team in teams)
+			{
+				System.Console.WriteLine(team.DisplayName + ": " + team.WebUrl);
+			}
+		}
+
+		private static async Task WriteLineUserList(IobGraphClient client)
+		{
+			var users = await client.GetUsers();
 
 			foreach (var user in users)
 			{
 				System.Console.WriteLine(user.Id + ": " + user.DisplayName + " <" + user.Mail + ">");
 			}
-
-			System.Console.ReadKey();
 		}
 
 		private static IConfigurationRoot LoadAppSettings()
