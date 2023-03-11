@@ -246,14 +246,14 @@ namespace InteractionOfficeBot.Core.MsGraph
 				MembershipType = ChannelMembershipType.Standard,
 			};
 
-			var channel = await _graphServiceClient
+			await _graphServiceClient
 				.Teams[group.Id]
 				.Channels
 				.Request()
 				.AddAsync(requestBody);
 		}
 
-		public async Task RemoveChannelForTeam(string teamName, string chanelName)
+		public async Task RemoveChannelFromTeam(string teamName, string chanelName)
 		{
 			var groups = await _graphServiceClient.Groups
 				.Request()
@@ -267,7 +267,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 				.Teams[group.Id]
 				.Channels
 				.Request()
-				.Filter($"displayName eq '{teamName}'")
+				.Filter($"displayName eq '{chanelName}'")
 				.GetAsync();
 
 			var channel = channels.First();
@@ -275,6 +275,22 @@ namespace InteractionOfficeBot.Core.MsGraph
 			await _graphServiceClient
 				.Teams[group.Id]
 				.Channels[channel.Id]
+				.Request()
+				.DeleteAsync();
+		}
+
+		public async Task RemoveTeam(string teamName)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			await _graphServiceClient
+				.Groups[group.Id]
 				.Request()
 				.DeleteAsync();
 		}
