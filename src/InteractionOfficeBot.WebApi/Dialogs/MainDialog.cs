@@ -15,13 +15,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string ALL_USER_REQUEST = "Show me all users";
 	    private const string ALL_TEAMS_REQUEST = "Show all teams in organization";
 	    private const string WHO_OF_TEAMS_REQUEST = "Who is on the team: 'Test Team'?";
-	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team: 'Test Team' ?";
-	    private const string CREATE_TEAM = "Please create team: 'Test Team' for user: 'victoria@8bpskq.onmicrosoft.com' ?";
-	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team: 'Test Team' ?";
-	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'";
+	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team:'Test Team'?";
+	    private const string CREATE_TEAM = "Please create team:'Test Team' for user:'victoria@8bpskq.onmicrosoft.com'.";
+	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team:'Test Team'.";
+	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'?";
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
-	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team' ";
+	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team'";
+
+	    private const string GraphDialog = "GraphDialog";
+
 
 
 	    private readonly ILogger _logger;
@@ -46,7 +49,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                     EndOnInvalidMessage = true
                 }));
 
-            AddDialog(new TextPrompt(nameof(TextPrompt)));
+            AddDialog(new TextPrompt(GraphDialog));
 
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
@@ -72,9 +75,10 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             if (tokenResponse?.Token != null)
             {
 	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+	            //TODO check for expiration token, and set userTokeStore to null if it become expiry, after that set the flag to ingore showing info about user
+	            
 	            userTokeStore.Token = tokenResponse.Token;
 	            await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
-
 
                 // Pull in the data from the Microsoft Graph.
                 //TODO Try Put GraphClient to UserTokenStore
@@ -85,7 +89,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 				await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}", cancellationToken: cancellationToken);
 
-                return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
+                return await stepContext.PromptAsync(GraphDialog, new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
@@ -134,7 +138,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("Can I help you with something else?"), cancellationToken);
 
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-        }
+		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
 		{
