@@ -1,5 +1,7 @@
 ﻿using Microsoft.Graph;
 
+using System.Threading.Tasks;
+
 namespace InteractionOfficeBot.Core.MsGraph
 {
 	// This class is a wrapper for the Microsoft Graph API
@@ -156,40 +158,6 @@ namespace InteractionOfficeBot.Core.MsGraph
 			return graphRequest.GetAsync();
 		}
 
-		public async Task CreateTeamFor(string teamName, string userEmail)
-		{
-			var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
-
-			var requestBody = new Team
-			{
-				DisplayName = teamName,
-				AdditionalData = new Dictionary<string, object>
-				{
-					{
-						"template@odata.bind" , "https://graph.microsoft.com/v1.0/teamsTemplates('standard')"
-					},
-				},
-				Members = new TeamMembersCollectionPage()  
-				{  
-					new AadUserConversationMember  
-					{  
-						Roles = new List<string>()  
-						{  
-							"owner"  
-						},  
-						AdditionalData = new Dictionary<string, object>()  
-						{  
-							{"user@odata.bind", $"https://graph.microsoft.com/v1.0/users('{user.Id}')"}  
-						}  
-					}  
-				},  
-			};
-
-			var result = await _graphServiceClient.Teams
-				.Request()
-				.AddAsync(requestBody);
-		}
-
 		public async Task<List<ConversationMember>> GetMembersOfTeams(string teamName)
 		{
 			var groups = await _graphServiceClient.Groups
@@ -230,6 +198,40 @@ namespace InteractionOfficeBot.Core.MsGraph
 			return channels;
 		}
 
+		public async Task CreateTeamFor(string teamName, string userEmail)
+		{
+			var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
+
+			var requestBody = new Team
+			{
+				DisplayName = teamName,
+				AdditionalData = new Dictionary<string, object>
+				{
+					{
+						"template@odata.bind" , "https://graph.microsoft.com/v1.0/teamsTemplates('standard')"
+					},
+				},
+				Members = new TeamMembersCollectionPage()  
+				{  
+					new AadUserConversationMember  
+					{  
+						Roles = new List<string>()  
+						{  
+							"owner"  
+						},  
+						AdditionalData = new Dictionary<string, object>()  
+						{  
+							{"user@odata.bind", $"https://graph.microsoft.com/v1.0/users('{user.Id}')"}  
+						}  
+					}  
+				},  
+			};
+
+			var result = await _graphServiceClient.Teams
+				.Request()
+				.AddAsync(requestBody);
+		}
+
 		public async Task CreateChannelForTeam(string teamName, string chanelName)
 		{
 			var groups = await _graphServiceClient.Groups
@@ -250,7 +252,36 @@ namespace InteractionOfficeBot.Core.MsGraph
 				.Teams[group.Id]
 				.Channels
 				.Request()
-				.AddAsync(requestBody);
+			.AddAsync(requestBody);
+		}
+
+		public async Task<List<ConversationMember>> GetMembersOfChannelFromTeam(string teamName, string chanelName)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			var channels = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels
+				.Request()
+				.Filter($"displayName eq '{chanelName}'")
+				.GetAsync();
+
+			var channel = channels.First();
+
+			var members = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels[channel.Id]
+				.Members
+				.Request()
+				.GetAsync();
+
+			return members.ToList();
 		}
 
 		public async Task RemoveChannelFromTeam(string teamName, string chanelName)
@@ -328,19 +359,6 @@ namespace InteractionOfficeBot.Core.MsGraph
 				.Messages
 				.Request()
 				.AddAsync(requestBody);
-
-			await _graphServiceClient
-				.Teams[group.Id]
-				.Channels[channel.Id]
-				.CompleteMigration()
-				.Request()
-				.PostAsync();
-
-			await _graphServiceClient
-				.Teams[group.Id]
-				.CompleteMigration()
-				.Request()
-				.PostAsync();
 		}
     }
 }

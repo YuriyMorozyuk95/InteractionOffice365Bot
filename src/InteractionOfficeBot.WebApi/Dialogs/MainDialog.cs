@@ -12,7 +12,17 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 {
     public class MainDialog : LogoutDialog
     {
-	    private const string ALL_USER_REQUEST = "show me all users";
+	    private const string ALL_USER_REQUEST = "Show me all users";
+	    private const string ALL_TEAMS_REQUEST = "Show all teams in organization";
+	    private const string WHO_OF_TEAMS_REQUEST = "Who is on the team: 'Test Team'?";
+	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team: 'Test Team' ?";
+	    private const string CREATE_TEAM = "Please create team: 'Test Team' for user: 'victoria@8bpskq.onmicrosoft.com' ?";
+	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team: 'Test Team' ?";
+	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'";
+	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
+	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
+	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team' ";
+
 
 	    private readonly ILogger _logger;
         private readonly IStateService _stateService;
@@ -87,13 +97,98 @@ namespace InteractionOfficeBot.WebApi.Dialogs
         {
             var result = (string)stepContext.Result;
 
-			if (result == ALL_USER_REQUEST)
+			switch (result)
 			{
-				await ShowAllUsers(stepContext, cancellationToken);
+				case ALL_USER_REQUEST:
+					await ShowAllUsers(stepContext, cancellationToken);
+					break;
+				case ALL_TEAMS_REQUEST:
+					await ShowAllTeams(stepContext, cancellationToken);
+					break;
+				case WHO_OF_TEAMS_REQUEST:
+					await MemeberOfTeam(stepContext, cancellationToken, "Test Team");
+					break;
+				case WHAT_CHANNELS_OF_TEAMS_REQUEST:
+					await ChanelOfTeam(stepContext, cancellationToken, "Test Team");
+					break;
+				case CREATE_TEAM:
+					await CreateTeamFor(stepContext, cancellationToken, "Test Team", "victoria@8bpskq.onmicrosoft.com");
+					break;
+				case CREATE_CHANNEL:
+					await CreateChanelForTeam(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					break;
+				case MEMBER_CHANNEL:
+					await MemberOfChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					break;
+				case REMOVE_CHANNEL:
+					await RemoveChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					break;
+				case REMOVE_TEAM:
+					await RemoveTeam(stepContext, cancellationToken, "Test Team");
+					break;
+				case SEND_MESSAGE_TO_CHANEL:
+					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
+					break;
 			}
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text("Can I help you with something else?"), cancellationToken);
 
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
+
+		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel, string helloWorld)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task RemoveTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task RemoveChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task MemberOfChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task CreateChanelForTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string testChanel)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task CreateTeamFor(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam, string victoriaBpskqOnmicrosoftCom)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task ChanelOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task MemeberOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		private async Task ShowAllTeams(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			var users = await client.Teams.GetListTeams();
+
+			foreach (var user in users)
+			{
+				var userInfo = user.DisplayName + " <" + user.Mail + ">";
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+			}
+		}
 
 		private async Task ShowAllUsers(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{
