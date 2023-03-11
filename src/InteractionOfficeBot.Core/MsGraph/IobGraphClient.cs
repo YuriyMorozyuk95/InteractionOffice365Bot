@@ -7,7 +7,7 @@ namespace InteractionOfficeBot.Core.MsGraph
     {
 	    private readonly GraphServiceClient _graphClient;
 
-	    private TeamsGroupRepository? _teamsGroupRepository;
+	    private TeamsRepository? _teamsGroupRepository;
 
         public IobGraphClient(GraphServiceClient graphServiceClient)
         {
@@ -16,9 +16,9 @@ namespace InteractionOfficeBot.Core.MsGraph
 
         public GraphServiceClient Client => _graphClient;
 
-        public TeamsGroupRepository TeamsGroup
+        public TeamsRepository Teams
         {
-	        get { return _teamsGroupRepository ??= new TeamsGroupRepository(_graphClient); }
+	        get { return _teamsGroupRepository ??= new TeamsRepository(_graphClient); }
         }
 
         // Sends an email on the users behalf using the Microsoft Graph API
@@ -138,11 +138,11 @@ namespace InteractionOfficeBot.Core.MsGraph
         // }
     }
 
-	public class TeamsGroupRepository
+	public class TeamsRepository
 	{
 		private readonly GraphServiceClient _graphServiceClient;
 
-		public TeamsGroupRepository(GraphServiceClient graphServiceClient)
+		public TeamsRepository(GraphServiceClient graphServiceClient)
 		{
 			_graphServiceClient = graphServiceClient;
 		}
@@ -190,10 +190,44 @@ namespace InteractionOfficeBot.Core.MsGraph
 				.AddAsync(requestBody);
 		}
 
-		public async Task GetListOfChannels(string teamName, string userEmail)
+		public async Task<List<ConversationMember>> GetMembersOfTeams(string teamName)
 		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
 
-			
+			var group = groups.Single();
+
+			var members = await _graphServiceClient
+				.Teams[group.Id]
+				.Members
+				.Request()
+				.GetAsync();
+
+
+			return members.ToList();
+		}
+
+		public async Task<ITeamChannelsCollectionPage> GetChannelsOfTeams(string teamName)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			var channels = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels
+				.Request()
+				.Select(x => new { x.DisplayName, x.WebUrl, })
+				.GetAsync();
+
+			return channels;
 		}
     }
 }

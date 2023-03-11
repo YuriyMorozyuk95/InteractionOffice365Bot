@@ -2,6 +2,8 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Directory = System.IO.Directory;
+
 
 namespace InteractionOfficeBot.Console
 {
@@ -14,7 +16,7 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			var teams = await client.Client.Teams.Request().Filter("startswith(displayName,%20'A')").Top(1).GetAsync();
+			await WriteChannelList(client);
 
 			System.Console.ReadKey();
 		}
@@ -22,16 +24,26 @@ namespace InteractionOfficeBot.Console
 
 		private static async Task CreateTeams(IobGraphClient client)
 		{
-			await client.TeamsGroup.CreateTeamFor("test1", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
+			await client.Teams.CreateTeamFor("test1", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
 		}
 
 		private static async Task WriteTeamsList(IobGraphClient client)
 		{
-			var teams = await client.TeamsGroup.GetListTeams();
+			var teams = await client.Teams.GetListTeams();
 
 			foreach (var team in teams)
 			{
 				System.Console.WriteLine(team.Id + ": " + team.DisplayName);
+			}
+		}
+
+		private static async Task WriteChannelList(IobGraphClient client)
+		{
+			var teams = await client.Teams.GetChannelsOfTeams("test1");
+
+			foreach (var team in teams)
+			{
+				System.Console.WriteLine(team.DisplayName + ": " + team.WebUrl);
 			}
 		}
 
