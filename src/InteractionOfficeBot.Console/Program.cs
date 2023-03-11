@@ -16,7 +16,7 @@ namespace InteractionOfficeBot.Console
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
 			var client = factory.CreateClientFromApplicationBeHalf();
 
-			await client.Teams.RemoveTeam("test1");
+			await client.Teams.SendMessageToChanel("Retail", "General", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
 
 			System.Console.ReadKey();
 		}

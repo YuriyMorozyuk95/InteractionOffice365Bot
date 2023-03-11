@@ -294,5 +294,53 @@ namespace InteractionOfficeBot.Core.MsGraph
 				.Request()
 				.DeleteAsync();
 		}
+
+		public async Task SendMessageToChanel(string teamName, string chanelName, string message)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			var channels = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels
+				.Request()
+				.Filter($"displayName eq '{chanelName}'")
+				.GetAsync();
+
+			var channel = channels.First();
+
+			var requestBody = new ChatMessage
+			{
+				Body = new ItemBody
+				{
+					Content = message,
+				},
+			};
+
+			await _graphServiceClient
+				.Teams[group.Id]
+				.Channels[channel.Id]
+				.Messages
+				.Request()
+				.AddAsync(requestBody);
+
+			await _graphServiceClient
+				.Teams[group.Id]
+				.Channels[channel.Id]
+				.CompleteMigration()
+				.Request()
+				.PostAsync();
+
+			await _graphServiceClient
+				.Teams[group.Id]
+				.CompleteMigration()
+				.Request()
+				.PostAsync();
+		}
     }
 }
