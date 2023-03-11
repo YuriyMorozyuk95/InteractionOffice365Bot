@@ -246,11 +246,37 @@ namespace InteractionOfficeBot.Core.MsGraph
 				MembershipType = ChannelMembershipType.Standard,
 			};
 
-			var channels = await _graphServiceClient
+			var channel = await _graphServiceClient
 				.Teams[group.Id]
 				.Channels
 				.Request()
 				.AddAsync(requestBody);
+		}
+
+		public async Task RemoveChannelForTeam(string teamName, string chanelName)
+		{
+			var groups = await _graphServiceClient.Groups
+				.Request()
+				.Filter($"resourceProvisioningOptions/Any(x:x eq 'Team') and displayName eq '{teamName}'")
+				.Top(1)
+				.GetAsync();
+
+			var group = groups.Single();
+
+			var channels = await _graphServiceClient
+				.Teams[group.Id]
+				.Channels
+				.Request()
+				.Filter($"displayName eq '{teamName}'")
+				.GetAsync();
+
+			var channel = channels.First();
+
+			await _graphServiceClient
+				.Teams[group.Id]
+				.Channels[channel.Id]
+				.Request()
+				.DeleteAsync();
 		}
     }
 }
