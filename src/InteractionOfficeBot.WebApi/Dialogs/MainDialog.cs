@@ -162,7 +162,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
 			}
-			//return await stepContext.ReplaceDialogAsync(InitialDialogId, new object(), cancellationToken);
+			
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
