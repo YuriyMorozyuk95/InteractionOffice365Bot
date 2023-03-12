@@ -22,7 +22,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'?";
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
-	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team'";
+	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello world' to channel: 'Test Chanel' in team: 'Test Team'";
 
 	    private const string GraphDialog = "GraphDialog";
 
@@ -162,8 +162,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
 			}
-
-			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+			return await stepContext.ReplaceDialogAsync(InitialDialogId, new object(), cancellationToken);
+			//return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
