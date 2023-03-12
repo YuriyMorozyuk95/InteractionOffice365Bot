@@ -25,7 +25,6 @@ public class TeamsRepository
 	{
 		var group = await GetTeam(teamName);
 
-		//TODO validate Any
 		var members = await _graphServiceClient
 			.Teams[group.Id]
 			.Members
@@ -39,7 +38,6 @@ public class TeamsRepository
 	{
 		var group = await GetTeam(teamName);
 
-		//TODO validate Any
 		var channels = await _graphServiceClient
 			.Teams[group.Id]
 			.Channels
