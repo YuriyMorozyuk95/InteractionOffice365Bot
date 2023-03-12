@@ -79,6 +79,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 	        if ((DateTime.UtcNow - lastAccess) >= TimeSpan.FromMinutes(_expireAfterMinutes))
 	        {
+		        _logger.LogWarning("token expired");
+
 		        // Notify the user that the conversation is being restarted.
 		        await stepContext.Context.SendActivityAsync("Welcome back!  Let's start over from the beginning.").ConfigureAwait(false);
 
@@ -88,6 +90,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 		        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
 	        }
+
+	        _logger.LogWarning("token still valid");
 
 	        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
         }
