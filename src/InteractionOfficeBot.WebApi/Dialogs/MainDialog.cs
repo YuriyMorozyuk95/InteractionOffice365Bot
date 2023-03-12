@@ -181,20 +181,20 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 		private async Task SendMessageToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string userEmail, string message)
 		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+			//var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			//var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			try
-			{
-				await client.Teams.SendMessageToUser(userEmail, message);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
+			//try
+			//{
+			//	await client.Teams.SendMessageToUser(userEmail, message);
+			//}
+			//catch (TeamsException e)
+			//{
+			//	await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+			//	return;
+			//}
 
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
+			//await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
 		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)

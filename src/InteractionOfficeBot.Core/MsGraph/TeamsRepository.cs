@@ -167,27 +167,20 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
-	public async Task SendMessageToUser(string userEmail, string message)
+	public async Task GetInstalledAppForUser(string userEmail)
 	{
-		var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
+		var apps = await _graphServiceClient.Users[userEmail]
+			.Teamwork
+			.InstalledApps
+			.Request()
+			.Select(x => new { x.Id, x.TeamsApp } )
+			.GetAsync();
 
-		if (user == null)
+		foreach (var app in apps)
 		{
-			throw new TeamsException($"user with email {userEmail} don't exist");
+			Console.WriteLine($"id: {app.Id} name: {app.TeamsApp.DisplayName}");
 		}
 
-		var requestBody = new Message
-		{
-			Body = new ItemBody
-			{
-				Content = message,
-			},
-		};
-
-		await _graphServiceClient.Users[userEmail]
-			.Messages
-			.Request()
-			.AddAsync(requestBody);
 	}
 
 	private Channel ValidateAndGetChannel(string channelName, ITeamChannelsCollectionPage channels)
