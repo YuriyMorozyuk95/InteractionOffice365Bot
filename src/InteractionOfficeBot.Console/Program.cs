@@ -3,6 +3,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Directory = System.IO.Directory;
+using Microsoft.Identity.Client;
 
 
 namespace InteractionOfficeBot.Console
@@ -14,11 +15,11 @@ namespace InteractionOfficeBot.Console
 			var serviceProvider = CreateServiceProvider();
 
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
-			var client = factory.CreateClientFromApplicationBeHalf();
+            var client = factory.CreateClientFromApplicationBeHalf();
 
-			await client.Teams.SendMessageToChanel("Retail", "General", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
+            await client.Teams.SendMessageToChanel("Retail", "General", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
 
-			System.Console.ReadKey();
+            System.Console.ReadKey();
 		}
 
 
@@ -67,7 +68,8 @@ namespace InteractionOfficeBot.Console
 			if (string.IsNullOrEmpty(config["applicationId"]) ||
 				string.IsNullOrEmpty(config["applicationSecret"]) ||
 				string.IsNullOrEmpty(config["redirectUri"]) ||
-				string.IsNullOrEmpty(config["tenantId"]))
+				string.IsNullOrEmpty(config["tenantId"]) ||
+				string.IsNullOrEmpty(config["authority"]))
 			{
 				throw new Exception("Missing app registration properties");
 			}
@@ -86,5 +88,20 @@ namespace InteractionOfficeBot.Console
 
 			return services.BuildServiceProvider();
 		}
-	}
+
+        private static async Task<string> GetUserToken(string[] scopes)
+        {
+            var config = LoadAppSettings();
+
+            var _publicClientApplication = PublicClientApplicationBuilder.Create(config["applicationId"])
+				.WithAuthority(config["authority"])
+				.WithDefaultRedirectUri()
+				.Build();
+
+            var _authResult = await _publicClientApplication.AcquireTokenInteractive(scopes).ExecuteAsync();
+
+            return _authResult.AccessToken;
+
+        }
+    }
 }
