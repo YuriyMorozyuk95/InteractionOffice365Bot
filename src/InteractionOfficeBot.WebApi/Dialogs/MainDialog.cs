@@ -28,6 +28,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
 	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello world' to channel: 'Test Chanel' in team: 'Test Team'";
+	    private const string SEND_MESSAGE_TO_USER = "Please send message: 'Hello world' to user: 'victoria@8bpskq.onmicrosoft.com'";
 
 	    private const string GraphDialog = "GraphDialog";
 
@@ -168,6 +169,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				case SEND_MESSAGE_TO_CHANEL:
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
+				case SEND_MESSAGE_TO_USER:
+					await SendMessageToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "Hello, world");
+					break;
 			}
 			
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
@@ -175,6 +179,24 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 		}
 
 		#region GraphMessageHandlers
+
+		private async Task SendMessageToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string userEmail, string message)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			try
+			{
+				await client.Teams.SendMessageToUser(userEmail, message);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
+		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
 		{

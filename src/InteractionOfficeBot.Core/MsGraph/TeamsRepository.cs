@@ -167,6 +167,29 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
+	public async Task SendMessageToUser(string userEmail, string message)
+	{
+		var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
+
+		if (user == null)
+		{
+			throw new TeamsException($"user with email {userEmail} don't exist");
+		}
+
+		var requestBody = new Message
+		{
+			Body = new ItemBody
+			{
+				Content = message,
+			},
+		};
+
+		await _graphServiceClient.Users[userEmail]
+			.Messages
+			.Request()
+			.AddAsync(requestBody);
+	}
+
 	private Channel ValidateAndGetChannel(string channelName, ITeamChannelsCollectionPage channels)
 	{
 		Channel? channel;
