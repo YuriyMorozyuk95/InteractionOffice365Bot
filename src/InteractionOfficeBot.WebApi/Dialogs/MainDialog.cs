@@ -12,7 +12,6 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -23,7 +22,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string WHO_OF_TEAMS_REQUEST = "Who is on the team: 'Test Team'?";
 	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team:'Test Team'?";
 	    private const string CREATE_TEAM = "Please create team:'Test Team' for user:'victoria@8bpskq.onmicrosoft.com'.";
-	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team:'Test Team'.";
+	    private const string CREATE_CHANNEL = "Please create channel: 'Test Chanel' for team:'Test Team'.";
 	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'?";
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
