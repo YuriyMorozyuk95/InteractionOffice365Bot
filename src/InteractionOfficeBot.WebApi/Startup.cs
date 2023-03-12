@@ -3,6 +3,7 @@ using InteractionOfficeBot.WebApi.Bots;
 using InteractionOfficeBot.WebApi.Dialogs;
 using InteractionOfficeBot.WebApi.Services;
 
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
@@ -10,6 +11,8 @@ using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
 namespace InteractionOfficeBot.WebApi
 {
@@ -49,6 +52,8 @@ namespace InteractionOfficeBot.WebApi
 
             // Create the bot as a transient. In this case the ASP Controller is expecting an IBot.
             services.AddTransient<IBot, TeamsBot<MainDialog>>();
+
+            services.AddSingleton<ILoggerFactory, NLogLoggerFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
