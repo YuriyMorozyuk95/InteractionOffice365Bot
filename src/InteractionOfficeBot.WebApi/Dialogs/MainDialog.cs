@@ -1,5 +1,9 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+
+using InteractionOfficeBot.Core.Exception;
 using InteractionOfficeBot.Core.MsGraph;
 using InteractionOfficeBot.WebApi.Services;
 using Microsoft.Bot.Builder;
@@ -7,6 +11,7 @@ using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -17,19 +22,19 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string WHO_OF_TEAMS_REQUEST = "Who is on the team: 'Test Team'?";
 	    private const string WHAT_CHANNELS_OF_TEAMS_REQUEST = "What channels can I find in the team:'Test Team'?";
 	    private const string CREATE_TEAM = "Please create team:'Test Team' for user:'victoria@8bpskq.onmicrosoft.com'.";
-	    private const string CREATE_CHANNEL = "Please create chanel: 'Test Chanel' for team:'Test Team'.";
+	    private const string CREATE_CHANNEL = "Please create channel: 'Test Chanel' for team:'Test Team'.";
 	    private const string MEMBER_CHANNEL = "Who are members of chanel: 'Test Chanel' in team: 'Test Team'?";
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
-	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello woeld' to channel: 'Test Chanel' in team: 'Test Team'";
+	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello world' to channel: 'Test Chanel' in team: 'Test Team'";
+	    private const string SEND_MESSAGE_TO_USER = "Please send message: 'Hello world' to user: 'victoria@8bpskq.onmicrosoft.com'";
 
 	    private const string GraphDialog = "GraphDialog";
-
-
 
 	    private readonly ILogger _logger;
         private readonly IStateService _stateService;
         private readonly IGraphServiceClientFactory _graphServiceClient;
+        private readonly int _expireAfterMinutes;
 
         public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService, IGraphServiceClientFactory graphServiceClient)
             : base(nameof(MainDialog), configuration["ConnectionName"])
@@ -37,6 +42,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             _logger = logger;
             _stateService = stateService;
             _graphServiceClient = graphServiceClient;
+            _expireAfterMinutes = configuration.GetValue<int>("ExpireAfterMinutes");
 
             AddDialog(new OAuthPrompt(
                 nameof(OAuthPrompt),
@@ -64,20 +70,50 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
         private async Task<DialogTurnResult> PromptStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
+	        // Retrieve the property value, and compare it to the current time.
+	        var lastAccess = await _stateService.LastAccessedTimeAccessor.GetAsync(
+		        stepContext.Context,
+		        () => DateTime.UtcNow,
+		        cancellationToken)
+		        .ConfigureAwait(false);
+
+	        if ((DateTime.UtcNow - lastAccess) >= TimeSpan.FromMinutes(_expireAfterMinutes))
+	        {
+		        _logger.LogWarning("token expired");
+
+		        // Notify the user that the conversation is being restarted.
+		        await stepContext.Context.SendActivityAsync("Welcome back!  Let's start over from the beginning.").ConfigureAwait(false);
+
+		        // Clear state.
+		        await _stateService.ConversationState.ClearStateAsync(stepContext.Context, cancellationToken).ConfigureAwait(false);
+		        await _stateService.UserState.ClearStateAsync(stepContext.Context, cancellationToken).ConfigureAwait(false);
+
+		        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
+	        }
+
+	        _logger.LogWarning("token still valid");
+
+	        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
         }
 
         private async Task<DialogTurnResult> LoginStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
+	        var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+
+	        if (userTokeStore.Token != null)
+	        {
+		        return await stepContext.PromptAsync(
+			        GraphDialog,
+			        new PromptOptions { Prompt = MessageFactory.Text("Can I help you with something else?") },
+			        cancellationToken);
+	        }
+
             // Get the token from the previous step. Note that we could also have gotten the
             // token directly from the prompt itself. There is an example of this in the next method.
             var tokenResponse = (TokenResponse)stepContext.Result;
             if (tokenResponse?.Token != null)
             {
-	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-	            //TODO check for expiration token, and set userTokeStore to null if it become expiry, after that set the flag to ingore showing info about user
-	            
-	            userTokeStore.Token = tokenResponse.Token;
+				userTokeStore.Token = tokenResponse.Token;
 	            await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
 
                 // Pull in the data from the Microsoft Graph.
@@ -95,7 +131,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
-
 
 		private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
@@ -133,11 +168,33 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				case SEND_MESSAGE_TO_CHANEL:
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
+				case SEND_MESSAGE_TO_USER:
+					await SendMessageToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "Hello, world");
+					break;
+			}
+			
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
+			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+		}
+
+		#region GraphMessageHandlers
+
+		private async Task SendMessageToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string userEmail, string message)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			try
+			{
+				await client.Teams.SendMessageToUser(userEmail, message);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
 			}
 
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text("Can I help you with something else?"), cancellationToken);
-
-			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
 		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
@@ -145,7 +202,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			await client.Teams.SendMessageToChanel(teamName, channelName, message);
+			try
+			{
+				await client.Teams.SendMessageToChanel(teamName, channelName, message);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
 		}
@@ -155,7 +220,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			await client.Teams.RemoveTeam(teamName);
+			try
+			{
+				await client.Teams.RemoveTeam(teamName);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} was removed"), cancellationToken);
 		}
@@ -165,7 +238,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			await client.Teams.RemoveChannelFromTeam(teamName, channelName);
+			try
+			{
+				await client.Teams.RemoveChannelFromTeam(teamName, channelName);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was removed"), cancellationToken);
 		}
@@ -175,7 +256,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var users = await client.Teams.GetMembersOfChannelFromTeam(teamName, channelName);
+			List<ConversationMember> users;
+			try
+			{
+				users = await client.Teams.GetMembersOfChannelFromTeam(teamName, channelName);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			foreach (var user in users)
 			{
@@ -189,7 +279,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			await client.Teams.CreateChannelForTeam(teamName, channelName);
+			try
+			{
+				await client.Teams.CreateChannelForTeam(teamName, channelName);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was created"), cancellationToken);
 		}
@@ -199,7 +297,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			await client.Teams.CreateTeamFor(teamName, userEmail);
+			try
+			{
+				await client.Teams.CreateTeamFor(teamName, userEmail);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} for {userEmail} was created"), cancellationToken);
 		}
@@ -209,11 +315,20 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var channels = await client.Teams.GetChannelsOfTeams(teamName);
+			ITeamChannelsCollectionPage channels;
+			try
+			{
+				channels = await client.Teams.GetChannelsOfTeams(teamName);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			foreach (var channel in channels)
 			{
-				var chanelInfo = channel.DisplayName + " Link: "+ channel.WebUrl;
+				var chanelInfo = channel.DisplayName + " Link: " + channel.WebUrl;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(chanelInfo), cancellationToken);
 			}
 		}
@@ -223,7 +338,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var users = await client.Teams.GetMembersOfTeams(testTeam);
+			List<ConversationMember> users;
+			try
+			{
+				users = await client.Teams.GetMembersOfTeams(testTeam);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			foreach (var user in users)
 			{
@@ -237,8 +361,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var teams = await client.Teams.GetListTeams();
-
+			IGraphServiceGroupsCollectionPage teams;
+			try
+			{
+				teams = await client.Teams.GetListTeams();
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 			foreach (var team in teams)
 			{
 				var teamInfo = team.DisplayName + "Description: " + team.Description;
@@ -251,7 +383,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			var users = await client.GetUsers();
+			IGraphServiceUsersCollectionPage users;
+			try
+			{
+				users = await client.GetUsers();
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
 
 			foreach (var user in users)
 			{
@@ -259,5 +400,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}
+
+		#endregion GraphMessageHandlers
     }
 }
