@@ -167,20 +167,16 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
-	public async Task GetInstalledAppForUser(string userEmail)
+	//TODO 
+	public async Task<IUserTeamworkInstalledAppsCollectionPage> GetInstalledAppForUser(string userEmail)
 	{
-		var apps = await _graphServiceClient.Users[userEmail]
+		return await _graphServiceClient.Users[userEmail]
 			.Teamwork
 			.InstalledApps
 			.Request()
+			.Expand(item => item.TeamsApp)
 			.Select(x => new { x.Id, x.TeamsApp } )
 			.GetAsync();
-
-		foreach (var app in apps)
-		{
-			Console.WriteLine($"id: {app.Id} name: {app.TeamsApp.DisplayName}");
-		}
-
 	}
 
 	private Channel ValidateAndGetChannel(string channelName, ITeamChannelsCollectionPage channels)
