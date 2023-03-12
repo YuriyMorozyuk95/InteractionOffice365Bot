@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using InteractionOfficeBot.Core.MsGraph;
 using InteractionOfficeBot.WebApi.Services;
@@ -30,6 +31,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private readonly ILogger _logger;
         private readonly IStateService _stateService;
         private readonly IGraphServiceClientFactory _graphServiceClient;
+        private readonly int _expireAfterMinutes;
 
         public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService, IGraphServiceClientFactory graphServiceClient)
             : base(nameof(MainDialog), configuration["ConnectionName"])
@@ -37,6 +39,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             _logger = logger;
             _stateService = stateService;
             _graphServiceClient = graphServiceClient;
+            _expireAfterMinutes = configuration.GetValue<int>("ExpireAfterMinutes");
 
             AddDialog(new OAuthPrompt(
                 nameof(OAuthPrompt),
@@ -64,20 +67,46 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
         private async Task<DialogTurnResult> PromptStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
+	        // Retrieve the property value, and compare it to the current time.
+	        var lastAccess = await _stateService.LastAccessedTimeAccessor.GetAsync(
+		        stepContext.Context,
+		        () => DateTime.UtcNow,
+		        cancellationToken)
+		        .ConfigureAwait(false);
+
+	        if ((DateTime.UtcNow - lastAccess) >= TimeSpan.FromMinutes(_expireAfterMinutes))
+	        {
+		        // Notify the user that the conversation is being restarted.
+		        await stepContext.Context.SendActivityAsync("Welcome back!  Let's start over from the beginning.").ConfigureAwait(false);
+
+		        // Clear state.
+		        await _stateService.ConversationState.ClearStateAsync(stepContext.Context, cancellationToken).ConfigureAwait(false);
+		        await _stateService.UserState.ClearStateAsync(stepContext.Context, cancellationToken).ConfigureAwait(false);
+
+		        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
+	        }
+
+	        return await stepContext.BeginDialogAsync(nameof(OAuthPrompt), null, cancellationToken);
         }
 
         private async Task<DialogTurnResult> LoginStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
+	        var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+
+	        if (userTokeStore.Token != null)
+	        {
+		        return await stepContext.PromptAsync(
+			        GraphDialog,
+			        new PromptOptions { Prompt = MessageFactory.Text("Can I help you with something else?") },
+			        cancellationToken);
+	        }
+
             // Get the token from the previous step. Note that we could also have gotten the
             // token directly from the prompt itself. There is an example of this in the next method.
             var tokenResponse = (TokenResponse)stepContext.Result;
             if (tokenResponse?.Token != null)
             {
-	            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-	            //TODO check for expiration token, and set userTokeStore to null if it become expiry, after that set the flag to ingore showing info about user
-	            
-	            userTokeStore.Token = tokenResponse.Token;
+				userTokeStore.Token = tokenResponse.Token;
 	            await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
 
                 // Pull in the data from the Microsoft Graph.
@@ -95,7 +124,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             await stepContext.Context.SendActivityAsync(MessageFactory.Text("Login was not successful please try again."), cancellationToken);
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
-
 
 		private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
@@ -134,8 +162,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
 			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text("Can I help you with something else?"), cancellationToken);
 
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
