@@ -162,8 +162,8 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
 			}
-			return await stepContext.ReplaceDialogAsync(InitialDialogId, new object(), cancellationToken);
-			//return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+			//return await stepContext.ReplaceDialogAsync(InitialDialogId, new object(), cancellationToken);
+			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
