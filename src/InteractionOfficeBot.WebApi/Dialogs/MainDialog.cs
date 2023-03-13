@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using InteractionOfficeBot.Core.Exception;
 using InteractionOfficeBot.Core.MsGraph;
+using InteractionOfficeBot.WebApi.Model;
 using InteractionOfficeBot.WebApi.Services;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
@@ -37,14 +39,21 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private readonly ILogger _logger;
         private readonly IStateService _stateService;
         private readonly IGraphServiceClientFactory _graphServiceClient;
+        private readonly ILuisService _luisService;
         private readonly int _expireAfterMinutes;
 
-        public MainDialog(IConfiguration configuration, ILogger<MainDialog> logger, IStateService stateService, IGraphServiceClientFactory graphServiceClient)
+        public MainDialog(
+	        IConfiguration configuration,
+	        ILogger<MainDialog> logger,
+	        IStateService stateService,
+	        IGraphServiceClientFactory graphServiceClient,
+	        ILuisService luisService)
             : base(nameof(MainDialog), configuration["ConnectionName"])
         {
             _logger = logger;
             _stateService = stateService;
             _graphServiceClient = graphServiceClient;
+            _luisService = luisService;
             _expireAfterMinutes = configuration.GetValue<int>("ExpireAfterMinutes");
 
             AddDialog(new OAuthPrompt(
@@ -138,42 +147,57 @@ namespace InteractionOfficeBot.WebApi.Dialogs
         {
             var result = (string)stepContext.Result;
 
-			switch (result)
+            var recognizeResult = await _luisService.Recognize(stepContext.Context, cancellationToken);
+            var topIntent = recognizeResult.TopIntent();
+
+			switch (topIntent.intent)
 			{
-				case ALL_USER_REQUEST:
+				case LuisRoot.Intent.ALL_USER_REQUEST:
 					await ShowAllUsers(stepContext, cancellationToken);
 					break;
-				case ALL_TEAMS_REQUEST:
+				case LuisRoot.Intent.ALL_TEAMS_REQUEST:
 					await ShowAllTeams(stepContext, cancellationToken);
 					break;
-				case WHO_OF_TEAMS_REQUEST:
-					await MemeberOfTeam(stepContext, cancellationToken, "Test Team");
+				case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
+
+					var team = recognizeResult.Entities
+						?.Team
+						?.FirstOrDefault()
+						?.Value
+						?.FirstOrDefault();
+
+					if (team == null)
+					{
+						throw new TeamsException("Can't recognize team");
+					}
+
+					await MemeberOfTeam(stepContext, cancellationToken, team);
 					break;
-				case WHAT_CHANNELS_OF_TEAMS_REQUEST:
+				case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
 					await ChanelOfTeam(stepContext, cancellationToken, "Test Team");
 					break;
-				case CREATE_TEAM:
+				case LuisRoot.Intent.CREATE_TEAM:
 					await CreateTeamFor(stepContext, cancellationToken, "Test Team", "victoria@8bpskq.onmicrosoft.com");
 					break;
-				case CREATE_CHANNEL:
+				case LuisRoot.Intent.CREATE_CHANNEL:
 					await CreateChanelForTeam(stepContext, cancellationToken, "Test Team", "Test Chanel");
 					break;
-				case MEMBER_CHANNEL:
+				case LuisRoot.Intent.MEMBER_CHANNEL:
 					await MemberOfChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
 					break;
-				case REMOVE_CHANNEL:
+				case LuisRoot.Intent.REMOVE_CHANNEL:
 					await RemoveChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
 					break;
-				case REMOVE_TEAM:
+				case LuisRoot.Intent.REMOVE_TEAM:
 					await RemoveTeam(stepContext, cancellationToken, "Test Team");
 					break;
-				case SEND_MESSAGE_TO_CHANEL:
+				case LuisRoot.Intent.SEND_MESSAGE_TO_CHANEL:
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
-				case SEND_EMAIL_TO_USER:
+				case LuisRoot.Intent.SEND_EMAIL_TO_USER:
 					await SendEmailToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "test", "Hello, world");
 					break;
-				case INSTALLED_APP_FOR_USER:
+				case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
 					await ShowInstalledAppForUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com");
 					break;
 			}
