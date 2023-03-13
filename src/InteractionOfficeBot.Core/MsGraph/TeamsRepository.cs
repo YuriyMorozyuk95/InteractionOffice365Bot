@@ -124,10 +124,28 @@ public class TeamsRepository
 
 	public async Task RemoveChannelFromTeam(string teamName, string chanelName)
 	{
-		//TODO
-		var group = await GetTeam(teamName);
+		var groups = await GetTeams(teamName);
 
-		var channel = await GetChannel(group.Id, chanelName);
+		var group = groups.FirstOrDefault();
+
+		if (group == null)
+		{
+			throw new TeamsException($"There is no team with name {teamName}");
+		}
+
+		var channels = await _graphServiceClient
+			.Teams[group.Id]
+			.Channels
+			.Request()
+			.Filter($"displayName eq '{chanelName}'")
+			.GetAsync();
+
+		var channel = channels.FirstOrDefault();
+
+		if (channel == null)
+		{
+			throw new TeamsException($"There is no channel with name {teamName}");
+		}
 
 		await _graphServiceClient
 			.Teams[group.Id]
@@ -138,8 +156,14 @@ public class TeamsRepository
 
 	public async Task RemoveTeam(string teamName)
 	{
-		//TODO
-		var group = await GetTeam(teamName);
+		var groups = await GetTeams(teamName);
+
+		var group = groups.FirstOrDefault();
+
+		if (group == null)
+		{
+			throw new TeamsException($"There is no team with name {teamName}");
+		}
 
 		await _graphServiceClient
 			.Groups[group.Id]
