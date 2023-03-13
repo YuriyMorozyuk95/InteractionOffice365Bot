@@ -159,52 +159,128 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await ShowAllTeams(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
-
-					var team = recognizeResult.Entities
-						?.Team
-						?.FirstOrDefault()
-						?.Value
-						?.FirstOrDefault();
-
-					if (team == null)
-					{
-						throw new TeamsException("Can't recognize team");
-					}
-
-					await MemeberOfTeam(stepContext, cancellationToken, team);
+				{
+					await MemeberOfTeam(
+						stepContext,
+						cancellationToken,
+						GetTeamFromEntity(recognizeResult));
 					break;
+				}
 				case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
-					await ChanelOfTeam(stepContext, cancellationToken, "Test Team");
+
+					await ChanelOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.CREATE_TEAM:
-					await CreateTeamFor(stepContext, cancellationToken, "Test Team", "victoria@8bpskq.onmicrosoft.com");
+					await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.CREATE_CHANNEL:
-					await CreateChanelForTeam(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					await CreateChanelForTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.MEMBER_CHANNEL:
-					await MemberOfChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					await MemberOfChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.REMOVE_CHANNEL:
-					await RemoveChanel(stepContext, cancellationToken, "Test Team", "Test Chanel");
+					await RemoveChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.REMOVE_TEAM:
-					await RemoveTeam(stepContext, cancellationToken, "Test Team");
+					await RemoveTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.SEND_MESSAGE_TO_CHANEL:
-					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
+					await SendMessageToChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.SEND_EMAIL_TO_USER:
-					await SendEmailToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "test", "Hello, world");
+					await SendEmailToUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult), GetEmailSubjectFromEntity(recognizeResult),  GetMessageFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
-					await ShowInstalledAppForUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com");
+					await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
 					break;
 			}
 			
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
+
+		private static string GetTeamFromEntity(LuisRoot recognizeResult)
+		{
+			var team = recognizeResult.Entities
+				?.Team
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (team == null)
+			{
+				throw new TeamsException("Can't recognize team");
+			}
+
+			return team;
+		}
+
+		private static string GetChannelFromEntity(LuisRoot recognizeResult)
+		{
+			var channel = recognizeResult.Entities
+				?.Channel
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (channel == null)
+			{
+				throw new TeamsException("Can't recognize channel");
+			}
+
+			return channel;
+		}
+
+		private static string GetUserFromEntity(LuisRoot recognizeResult)
+		{
+			var channel = recognizeResult.Entities
+				?.User
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (channel == null)
+			{
+				throw new TeamsException("Can't recognize user email");
+			}
+
+			return channel;
+		}
+
+		private static string GetMessageFromEntity(LuisRoot recognizeResult)
+		{
+			var channel = recognizeResult.Entities
+				?.Message
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (channel == null)
+			{
+				throw new TeamsException("Can't recognize message");
+			}
+
+			return channel;
+		}
+
+		private static string GetEmailSubjectFromEntity(LuisRoot recognizeResult)
+		{
+			var channel = recognizeResult.Entities
+				?.EmailSubject
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (channel == null)
+			{
+				throw new TeamsException("Can't recognize message");
+			}
+
+			return channel;
+		}
+
+
 
 		private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
 		{
