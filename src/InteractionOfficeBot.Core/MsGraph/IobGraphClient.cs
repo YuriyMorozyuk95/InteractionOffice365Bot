@@ -43,7 +43,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 
             var recipients = new List<Recipient>
             {
-                new Recipient
+                new()
                 {
                     EmailAddress = new EmailAddress
                     {

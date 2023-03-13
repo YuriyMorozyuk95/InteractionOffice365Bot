@@ -124,6 +124,7 @@ public class TeamsRepository
 
 	public async Task RemoveChannelFromTeam(string teamName, string chanelName)
 	{
+		//TODO
 		var group = await GetTeam(teamName);
 
 		var channel = await GetChannel(group.Id, chanelName);
@@ -137,6 +138,7 @@ public class TeamsRepository
 
 	public async Task RemoveTeam(string teamName)
 	{
+		//TODO
 		var group = await GetTeam(teamName);
 
 		await _graphServiceClient
@@ -167,7 +169,6 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
-	//TODO 
 	public async Task<IUserTeamworkInstalledAppsCollectionPage> GetInstalledAppForUser(string userEmail)
 	{
 		return await _graphServiceClient.Users[userEmail]
