@@ -23,7 +23,7 @@ namespace InteractionOfficeBot.WebApi.Services
 			var luisApplication = new LuisApplication(
 				configuration["LuisAppId"],
 				configuration["LuisAPIKey"],
-				$"https://{configuration["LuisAPIHostName"]}.api.cognitive.microsoft.com");
+				configuration["LuisAPIWeb"]);
 
 			var recognizerOptions = new LuisRecognizerOptionsV3(luisApplication)
 			{
@@ -31,7 +31,6 @@ namespace InteractionOfficeBot.WebApi.Services
 				{
 					IncludeAllIntents = true,
 					IncludeInstanceData = true,
-					//Slot = configuration["LuisSlot"]
 				}
 			};
 
