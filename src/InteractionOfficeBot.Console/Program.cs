@@ -21,7 +21,7 @@ namespace InteractionOfficeBot.Console
 
             var client = factory.CreateClientFromUserBeHalf(token);
 
-			await client.Teams.SendMessageFromBot("yurii.moroziuk.iob@8bpskq.onmicrosoft.com", "hello");
+			//await client.Teams.SendMessageFromBot("yurii.moroziuk.iob@8bpskq.onmicrosoft.com", "hello");
 
             System.Console.ReadKey();
 		}
