@@ -18,11 +18,10 @@ namespace InteractionOfficeBot.Console
 
 			var scopes = new [] { "https://graph.microsoft.com/.default" };
 			var token = await GetUserToken(scopes);
-
             var client = factory.CreateClientFromUserBeHalf(token);
 
-			//await client.SendMailAsync("yurii.moroziuk.iob@8bpskq.onmicrosoft.com", "hello", "hey");
-			await client.SendMailAsync("yurii.moroziuk@hotmail.com", "hello", "hey");
+            var a = client.Teams.GetInstalledAppForUser("victoria@8bpskq.onmicrosoft.com");
+
 
             System.Console.ReadKey();
 		}
