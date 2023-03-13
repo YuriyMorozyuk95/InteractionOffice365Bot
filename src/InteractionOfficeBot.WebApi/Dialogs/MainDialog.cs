@@ -27,7 +27,10 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string REMOVE_CHANNEL = "Please remove chanel: 'Test Chanel' in team: 'Test Team'";
 	    private const string REMOVE_TEAM = "Please remove team: 'Test Team'";
 	    private const string SEND_MESSAGE_TO_CHANEL = "Please send message: 'Hello world' to channel: 'Test Chanel' in team: 'Test Team'";
-	    private const string SEND_MESSAGE_TO_USER = "Please send message: 'Hello world' to user: 'victoria@8bpskq.onmicrosoft.com'";
+		//TODO ADD to LUIS
+		//TODO ADD entity email to LUIS
+	    private const string SEND_EMAIL_TO_USER = "Please send email with subject: 'test' and message: 'Hello world' to user: 'victoria@8bpskq.onmicrosoft.com'";
+	    private const string INSTALLED_APP_FOR_USER = "Show me all installed applications in teams for user: 'victoria@8bpskq.onmicrosoft.com'";
 
 	    private const string GraphDialog = "GraphDialog";
 
@@ -51,7 +54,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                     ConnectionName = ConnectionName,
                     Text = "Please Sign In",
                     Title = "Sign In",
-                    Timeout = 300000, // User has 5 minutes to login (1000 * 60 * 5)
                     EndOnInvalidMessage = true
                 }));
 
@@ -168,8 +170,11 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				case SEND_MESSAGE_TO_CHANEL:
 					await SendMessageToChanel(stepContext, cancellationToken, "Test Team", "Test Chanel", "Hello, world");
 					break;
-				case SEND_MESSAGE_TO_USER:
-					await SendMessageToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "Hello, world");
+				case SEND_EMAIL_TO_USER:
+					await SendEmailToUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com", "test", "Hello, world");
+					break;
+				case INSTALLED_APP_FOR_USER:
+					await ShowInstalledAppForUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com");
 					break;
 			}
 			
@@ -177,16 +182,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
-		#region GraphMessageHandlers
-
-		private async Task SendMessageToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string userEmail, string message)
+		private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
 		{
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
+			IUserTeamworkInstalledAppsCollectionPage apps;
 			try
 			{
-				await client.Teams.SendMessageToUser(userEmail, message);
+				apps = await client.Teams.GetInstalledAppForUser(email);
 			}
 			catch (TeamsException e)
 			{
@@ -194,7 +198,33 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
+			foreach (var channel in apps)
+			{
+				var appInfo = channel.TeamsApp.DisplayName + " app id: " + channel.Id;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(appInfo), cancellationToken);
+			}
+
+		}
+
+		#region GraphMessageHandlers
+
+		private async Task SendEmailToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string emailTo, string subject, string message)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+			var me = await client.GetMeAsync();
+
+			try
+			{
+				await client.SendMailAsync(emailTo, subject, message);
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Email to user {emailTo} was send from {me.UserPrincipalName}"), cancellationToken);
 		}
 
 		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)

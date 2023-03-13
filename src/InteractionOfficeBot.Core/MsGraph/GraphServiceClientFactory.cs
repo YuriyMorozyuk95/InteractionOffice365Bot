@@ -51,8 +51,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 			var redirectUri = _configuration["redirectUri"];
 			var authority = $"https://login.microsoftonline.com/{_configuration["tenantId"]}/v2.0";
 
-			List<string> scopes = new List<string>();
-			scopes.Add("https://graph.microsoft.com/.default");
+			var scopes = new List<string> { "https://graph.microsoft.com/.default" };
 
 			var cca = ConfidentialClientApplicationBuilder.Create(clientId)
 				.WithAuthority(authority)

@@ -124,9 +124,28 @@ public class TeamsRepository
 
 	public async Task RemoveChannelFromTeam(string teamName, string chanelName)
 	{
-		var group = await GetTeam(teamName);
+		var groups = await GetTeams(teamName);
 
-		var channel = await GetChannel(group.Id, chanelName);
+		var group = groups.FirstOrDefault();
+
+		if (group == null)
+		{
+			throw new TeamsException($"There is no team with name {teamName}");
+		}
+
+		var channels = await _graphServiceClient
+			.Teams[group.Id]
+			.Channels
+			.Request()
+			.Filter($"displayName eq '{chanelName}'")
+			.GetAsync();
+
+		var channel = channels.FirstOrDefault();
+
+		if (channel == null)
+		{
+			throw new TeamsException($"There is no channel with name {teamName}");
+		}
 
 		await _graphServiceClient
 			.Teams[group.Id]
@@ -137,7 +156,14 @@ public class TeamsRepository
 
 	public async Task RemoveTeam(string teamName)
 	{
-		var group = await GetTeam(teamName);
+		var groups = await GetTeams(teamName);
+
+		var group = groups.FirstOrDefault();
+
+		if (group == null)
+		{
+			throw new TeamsException($"There is no team with name {teamName}");
+		}
 
 		await _graphServiceClient
 			.Groups[group.Id]
@@ -167,27 +193,15 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
-	public async Task SendMessageToUser(string userEmail, string message)
+	public async Task<IUserTeamworkInstalledAppsCollectionPage> GetInstalledAppForUser(string userEmail)
 	{
-		var user = await _graphServiceClient.Users[userEmail].Request().GetAsync();
-
-		if (user == null)
-		{
-			throw new TeamsException($"user with email {userEmail} don't exist");
-		}
-
-		var requestBody = new Message
-		{
-			Body = new ItemBody
-			{
-				Content = message,
-			},
-		};
-
-		await _graphServiceClient.Users[userEmail]
-			.Messages
+		return await _graphServiceClient.Users[userEmail]
+			.Teamwork
+			.InstalledApps
 			.Request()
-			.AddAsync(requestBody);
+			.Expand(item => item.TeamsApp)
+			.Select(x => new { x.Id, x.TeamsApp } )
+			.GetAsync();
 	}
 
 	private Channel ValidateAndGetChannel(string channelName, ITeamChannelsCollectionPage channels)

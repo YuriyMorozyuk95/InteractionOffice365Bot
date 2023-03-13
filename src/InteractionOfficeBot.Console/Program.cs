@@ -15,9 +15,13 @@ namespace InteractionOfficeBot.Console
 			var serviceProvider = CreateServiceProvider();
 
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
-            var client = factory.CreateClientFromApplicationBeHalf();
 
-            await client.Teams.SendMessageToChanel("Retail", "General", "yurii.moroziuk.iob@8bpskq.onmicrosoft.com");
+			var scopes = new [] { "https://graph.microsoft.com/.default" };
+			var token = await GetUserToken(scopes);
+            var client = factory.CreateClientFromUserBeHalf(token);
+
+            var a = client.Teams.GetInstalledAppForUser("victoria@8bpskq.onmicrosoft.com");
+
 
             System.Console.ReadKey();
 		}
