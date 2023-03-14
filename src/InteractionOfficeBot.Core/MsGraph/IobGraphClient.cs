@@ -11,6 +11,8 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 	    private TeamsRepository? _teamsGroupRepository;
 
+        private OneDriveRepository? _oneDriveRepository;
+
         public IobGraphClient(GraphServiceClient graphServiceClient)
         {
 	        _graphClient = graphServiceClient;
@@ -21,6 +23,11 @@ namespace InteractionOfficeBot.Core.MsGraph
         public TeamsRepository Teams
         {
 	        get { return _teamsGroupRepository ??= new TeamsRepository(_graphClient); }
+        }
+
+        public OneDriveRepository OneDrive
+        {
+            get => _oneDriveRepository ??= new OneDriveRepository(_graphClient);
         }
 
         // Sends an email on the users behalf using the Microsoft Graph API
