@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Configuration;
 
 using System.Threading.Tasks;
-using InteractionOfficeBot.WebApi.Model;
 using Microsoft.Bot.Builder;
 using System.Threading;
+using InteractionOfficeBot.Core.Model;
 
 namespace InteractionOfficeBot.WebApi.Services
 {

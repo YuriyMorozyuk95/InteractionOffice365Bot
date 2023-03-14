@@ -20,8 +20,13 @@ namespace InteractionOfficeBot.Console
 			var token = await GetUserToken(scopes);
             var client = factory.CreateClientFromUserBeHalf(token);
 
-            var a = client.Teams.GetInstalledAppForUser("victoria@8bpskq.onmicrosoft.com");
+            var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
 
+            foreach (var user in a)
+            {
+	            var userInfo = user.DisplayName + " Activity:" + user.Activity;
+	            System.Console.WriteLine(userInfo);
+            }
 
             System.Console.ReadKey();
 		}
@@ -49,16 +54,6 @@ namespace InteractionOfficeBot.Console
 			foreach (var team in teams)
 			{
 				System.Console.WriteLine(team.DisplayName + ": " + team.WebUrl);
-			}
-		}
-
-		private static async Task WriteLineUserList(IobGraphClient client)
-		{
-			var users = await client.GetUsers();
-
-			foreach (var user in users)
-			{
-				System.Console.WriteLine(user.Id + ": " + user.DisplayName + " <" + user.Mail + ">");
 			}
 		}
 
