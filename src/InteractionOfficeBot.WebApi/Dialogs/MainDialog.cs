@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -17,6 +16,7 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Attachment = Microsoft.Bot.Schema.Attachment;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -182,7 +182,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 							await ChanelOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
 							break;
 						case LuisRoot.Intent.CREATE_TEAM:
-							await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+							await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetUserFromEntity(recognizeResult));
 							break;
 						case LuisRoot.Intent.CREATE_CHANNEL:
 							await CreateChanelForTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
@@ -654,13 +654,13 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			var sb = new StringBuilder();
+            var sb = new StringBuilder();
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
-			{
-				var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
-				sb.AppendLine(displayString);
-			}
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+            {
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
+                sb.AppendLine(displayString);
+            }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
         }
@@ -686,7 +686,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
                 sb.AppendLine(displayString);
             }
 
@@ -714,7 +714,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
                 sb.AppendLine(displayString);
             }
 
@@ -757,13 +757,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			var attachment = new Microsoft.Bot.Schema.Attachment
+            var reply = MessageFactory.Text("Here is your file.");
+			var attachment = new Attachment
 			{
 				ContentUrl = file.WebUrl,
 				ContentType = file.File.MimeType,
 				Name = file.Name,
 			};
-			await stepContext.Context.SendActivityAsync(MessageFactory.Attachment(attachment), cancellationToken);
+            reply.Attachments = new List<Attachment>() { attachment };
+
+			await stepContext.Context.SendActivityAsync(reply, cancellationToken);
 		}
 
         private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
