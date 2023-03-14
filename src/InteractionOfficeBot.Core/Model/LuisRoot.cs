@@ -1,11 +1,9 @@
-﻿using Microsoft.Bot.Builder.AI.Luis;
-using Microsoft.Bot.Builder;
+﻿using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.AI.Luis;
 using Newtonsoft.Json;
-using System.Collections.Generic;
-using System;
-using Newtonsoft.Json.Serialization;
+using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
 
-namespace InteractionOfficeBot.WebApi.Model
+namespace InteractionOfficeBot.Core.Model
 {
 	 public partial class LuisRoot: IRecognizerConvert
     {

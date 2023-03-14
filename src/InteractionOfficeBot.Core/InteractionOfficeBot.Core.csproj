@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Bot.Builder" Version="4.19.3" />
+    <PackageReference Include="Microsoft.Bot.Builder.AI.Luis" Version="4.19.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.Graph" Version="4.54.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.50.0" />

@@ -6,8 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using InteractionOfficeBot.Core.Exception;
+using InteractionOfficeBot.Core.Model;
 using InteractionOfficeBot.Core.MsGraph;
-using InteractionOfficeBot.WebApi.Model;
 using InteractionOfficeBot.WebApi.Services;
 
 using Microsoft.Bot.Builder;
@@ -499,7 +499,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			List<ConversationMember> users;
+			IEnumerable<TeamsUserInfo> users;
 			try
 			{
 				users = await client.Teams.GetMembersOfTeams(testTeam);
@@ -512,7 +512,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName;
+				var userInfo = user.DisplayName + " Activity:" + user.Activity + " Availability:" + user.Availability;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}

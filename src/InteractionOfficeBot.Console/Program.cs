@@ -20,8 +20,13 @@ namespace InteractionOfficeBot.Console
 			var token = await GetUserToken(scopes);
             var client = factory.CreateClientFromUserBeHalf(token);
 
-            var a = client.Teams.GetInstalledAppForUser("victoria@8bpskq.onmicrosoft.com");
+            var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
 
+            foreach (var user in a)
+            {
+	            var userInfo = user.DisplayName + " Activity:" + user.Activity + " Availability:" + user.Availability;
+	            System.Console.WriteLine(userInfo);
+            }
 
             System.Console.ReadKey();
 		}
