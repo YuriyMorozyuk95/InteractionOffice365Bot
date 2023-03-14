@@ -658,8 +658,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
-                sb.AppendLine(displayString);
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
+                sb.Append(displayString);
+                sb.Append(Environment.NewLine);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -686,8 +687,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
-                sb.AppendLine(displayString);
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
+                sb.Append(displayString);
+                sb.Append(Environment.NewLine);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -714,8 +716,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
-                sb.AppendLine(displayString);
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
+                sb.Append(displayString);
+                sb.Append(Environment.NewLine);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
