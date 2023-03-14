@@ -230,6 +230,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
+		#region Helpers
 		private static string GetTeamFromEntity(LuisRoot recognizeResult)
 		{
 			var team = recognizeResult.Entities
@@ -310,8 +311,10 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return channel;
 		}
 
+		#endregion 
 
 
+		#region GraphMessageHandlers
 		private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
 		{
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
@@ -335,8 +338,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			}
 
 		}
-
-		#region GraphMessageHandlers
 
 		private async Task SendEmailToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string emailTo, string subject, string message)
 		{
