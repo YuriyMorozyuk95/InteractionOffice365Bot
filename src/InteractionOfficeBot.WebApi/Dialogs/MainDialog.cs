@@ -366,7 +366,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             return title;
         }
 
-        private static DateTime GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
+        private static DateTime? GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
         {
             var reminderTime = recognizeResult.Entities
                 ?.ReminderTime
@@ -379,8 +379,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                 throw new TeamsException("Can't recognize reminder time");
 			}
 
-            DateTime dt;
-            DateTime.TryParse(reminderTime, out dt);
+
+
+            var dt = AiRecognizer.RecognizeDateTime(reminderTime, out _);
 
             return dt;
         }
@@ -787,7 +788,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             }
         }
 
-        private async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime reminderTime)
+        private async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime? reminderTime)
         {
             var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
             var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
@@ -809,7 +810,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
             }
         }
 
-        private async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime reminderTime)
+        private async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime? reminderTime)
         {
             var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
             var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
