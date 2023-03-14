@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -609,12 +610,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
+			var sb = new StringBuilder();
+
+			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
 			{
-				var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
+				var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
+				sb.AppendLine(displayString);
 			}
-		}
+
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
+        }
 
 		private async Task ShowOneDriveFolderContents(WaterfallStepContext stepContext, CancellationToken cancellationToken, string folderPath)
 		{
@@ -633,12 +638,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
-			{
-				var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
-			}
-		}
+            var sb = new StringBuilder();
+
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+            {
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
+                sb.AppendLine(displayString);
+            }
+
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
+        }
 
 		private async Task SearchOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string searchText)
 		{
@@ -657,12 +666,16 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
-			{
-				var displayString = Path.Combine(driveItem.ParentReference.Path, driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name);
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
-			}
-		}
+            var sb = new StringBuilder();
+
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+            {
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}{Path.DirectorySeparatorChar}" : driveItem.Name;
+                sb.AppendLine(displayString);
+            }
+
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
+        }
 
 		private async Task DeleteOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath)
 		{
@@ -703,6 +716,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var attachment = new Microsoft.Bot.Schema.Attachment
 			{
 				ContentUrl = file.WebUrl,
+				ContentType = file.File.MimeType,
 				Name = file.Name,
 			};
 			await stepContext.Context.SendActivityAsync(MessageFactory.Attachment(attachment), cancellationToken);
