@@ -57,16 +57,6 @@ namespace InteractionOfficeBot.Console
 			}
 		}
 
-		private static async Task WriteLineUserList(IobGraphClient client)
-		{
-			var users = await client.GetUsers();
-
-			foreach (var user in users)
-			{
-				System.Console.WriteLine(user.Id + ": " + user.DisplayName + " <" + user.Mail + ">");
-			}
-		}
-
 		private static IConfigurationRoot LoadAppSettings()
 		{
 			var config = new ConfigurationBuilder()
