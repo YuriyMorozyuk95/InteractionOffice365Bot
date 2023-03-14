@@ -37,10 +37,9 @@ public class TeamsRepository
 
 		var teamsUserInfo = result.Select(x => new TeamsUserInfo
 		{
-			DisplayName = members.FirstOrDefault(m => m.Id == x.Id)?.DisplayName,
+			DisplayName = members.FirstOrDefault(m => ((AadUserConversationMember)m).UserId == x.Id)?.DisplayName,
 			Activity = x.Activity,
-			Availability = x.Availability
-		}).OrderBy(x => x.Availability);
+		}).OrderBy(x => x.Activity);
 
 		return teamsUserInfo;
 	}
@@ -145,8 +144,9 @@ public class TeamsRepository
 		}
 
 		var channels = await _graphServiceClient
-			.Teams[group.Id]
-			.Channels
+			.Me
+			.Todo
+			.Lists
 			.Request()
 			.Filter($"displayName eq '{chanelName}'")
 			.GetAsync();

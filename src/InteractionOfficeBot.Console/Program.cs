@@ -24,7 +24,7 @@ namespace InteractionOfficeBot.Console
 
             foreach (var user in a)
             {
-	            var userInfo = user.DisplayName + " Activity:" + user.Activity + " Availability:" + user.Availability;
+	            var userInfo = user.DisplayName + " Activity:" + user.Activity;
 	            System.Console.WriteLine(userInfo);
             }
 

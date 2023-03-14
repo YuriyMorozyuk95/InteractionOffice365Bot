@@ -512,7 +512,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " Activity:" + user.Activity + " Availability:" + user.Availability;
+				var userInfo = user.DisplayName + " Activity:" + user.Activity;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}
