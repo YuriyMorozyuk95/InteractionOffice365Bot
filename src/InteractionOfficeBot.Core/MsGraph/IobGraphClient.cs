@@ -11,6 +11,8 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 	    private TeamsRepository? _teamsGroupRepository;
 
+        private OneDriveRepository? _oneDriveRepository;
+
         private TodoTaskRepository? _todoGroupRepository;
 
         public IobGraphClient(GraphServiceClient graphServiceClient)
@@ -23,6 +25,11 @@ namespace InteractionOfficeBot.Core.MsGraph
         public TeamsRepository Teams
         {
 	        get { return _teamsGroupRepository ??= new TeamsRepository(_graphClient); }
+        }
+
+        public OneDriveRepository OneDrive
+        {
+            get => _oneDriveRepository ??= new OneDriveRepository(_graphClient);
         }
 
         public TodoTaskRepository TodoTask
