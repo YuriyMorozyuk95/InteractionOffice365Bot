@@ -161,21 +161,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			switch (result)
 			{
-				case ONEDRIVE_ROOT_CONTENTS:
-					await ShowOneDriveContents(stepContext, cancellationToken);
-					break;
-				case ONEDRIVE_FOLDER_CONTENTS:
-					await ShowOneDriveFolderContents(stepContext, cancellationToken, "vika_dura/alex loh");
-					break;
-				case ONEDRIVE_SEARCH:
-					await SearchOneDrive(stepContext, cancellationToken, "paris");
-					break;
-				case ONEDRIVE_DELETE:
-					await DeleteOneDrive(stepContext, cancellationToken, "vika dura/my-picture.jpeg");
-					break;
-				case ONEDRIVE_DOWNLOAD:
-					await DownloadOneDrive(stepContext, cancellationToken, "paris.xlsx");
-					break;
 				default:
 					switch (topIntent.intent)
 					{
@@ -220,18 +205,62 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 						case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
 							await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
 							break;
-
+						case LuisRoot.Intent.ONEDRIVE_ROOT_CONTENTS:
+							await ShowOneDriveContents(stepContext, cancellationToken);
+							break;
+						case LuisRoot.Intent.ONEDRIVE_FOLDER_CONTENTS:
+							await ShowOneDriveFolderContents(stepContext, cancellationToken, GetFolderPathFromEntity(recognizeResult) );
+							break;
+						case LuisRoot.Intent.ONEDRIVE_SEARCH:
+							await SearchOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.ONEDRIVE_DELETE:
+							await DeleteOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
+							await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
 					}
 					break;
 			}
-
-
-
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
 		#region Helpers
+
+		private static string GetFileFromEntity(LuisRoot recognizeResult)
+		{
+			var team = recognizeResult.Entities
+				?.Files
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (team == null)
+			{
+				throw new TeamsException("Can't recognize file");
+			}
+
+			return team;
+		}
+
+		private static string GetFolderPathFromEntity(LuisRoot recognizeResult)
+		{
+			var team = recognizeResult.Entities
+				?.Folder
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (team == null)
+			{
+				throw new TeamsException("Can't recognize folder");
+			}
+
+			return team;
+		}
+
 		private static string GetTeamFromEntity(LuisRoot recognizeResult)
 		{
 			var team = recognizeResult.Entities
@@ -490,7 +519,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var channel in channels)
 			{
-				var chanelInfo = channel.DisplayName + " Link: " + channel.WebUrl;
+				var chanelInfo = channel.DisplayName + "\nLink: " + channel.WebUrl;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(chanelInfo), cancellationToken);
 			}
 		}
