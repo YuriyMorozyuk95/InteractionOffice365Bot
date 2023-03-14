@@ -1,6 +1,7 @@
 ﻿using Microsoft.Graph;
 
 using System.Threading.Tasks;
+using InteractionOfficeBot.Core.Model;
 
 namespace InteractionOfficeBot.Core.MsGraph
 {
@@ -97,18 +98,25 @@ namespace InteractionOfficeBot.Core.MsGraph
         }
 
         // Get information about the user.
-        public Task<IGraphServiceUsersCollectionPage> GetUsers()
+        public async Task<IEnumerable<TeamsUserInfo>> GetUsers()
         {
-	        var graphRequest = _graphClient.Users
+	        var users = await _graphClient.Users
 		        .Request()
-		        .Select(u => new { u.DisplayName, u.Mail });
+		        .GetAsync();;
 
-	        return graphRequest.GetAsync();
+	        var result = await _graphClient.Communications.GetPresencesByUserId(users.Select(x => x.Id)).Request().PostAsync();
+
+	        var teamsUserInfo = result.Select(x => new TeamsUserInfo
+	        {
+		        DisplayName = users.FirstOrDefault(m => m.Id == x.Id)?.DisplayName,
+		        Activity = x.Activity,
+	        }).OrderBy(x => x.Activity);
+
+	        return teamsUserInfo;
         }
 
         public async Task<User> GetMyUsers()
         {
-            //TODO add const
 	        return await _graphClient.Users["yurii.moroziuk.iob@8bpskq.onmicrosoft.com"].Request().GetAsync();
         }
 

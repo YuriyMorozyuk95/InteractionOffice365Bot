@@ -1,4 +1,6 @@
-﻿using InteractionOfficeBot.Core.Exception;
+﻿using System.Text.Json.Serialization;
+using InteractionOfficeBot.Core.Exception;
+using InteractionOfficeBot.Core.Model;
 using Microsoft.Graph;
 
 namespace InteractionOfficeBot.Core.MsGraph;
@@ -21,7 +23,7 @@ public class TeamsRepository
 		return graphRequest.GetAsync();
 	}
 
-	public async Task<List<ConversationMember>> GetMembersOfTeams(string teamName)
+	public async Task<IEnumerable<TeamsUserInfo>> GetMembersOfTeams(string teamName)
 	{
 		var group = await GetTeam(teamName);
 
@@ -31,7 +33,15 @@ public class TeamsRepository
 			.Request()
 			.GetAsync();
 
-		return members.ToList();
+		var result = await _graphServiceClient.Communications.GetPresencesByUserId(members.Select(x => ((AadUserConversationMember)x).UserId)).Request().PostAsync();
+
+		var teamsUserInfo = result.Select(x => new TeamsUserInfo
+		{
+			DisplayName = members.FirstOrDefault(m => ((AadUserConversationMember)m).UserId == x.Id)?.DisplayName,
+			Activity = x.Activity,
+		}).OrderBy(x => x.Activity);
+
+		return teamsUserInfo;
 	}
 
 	public async Task<ITeamChannelsCollectionPage> GetChannelsOfTeams(string teamName)
@@ -134,8 +144,9 @@ public class TeamsRepository
 		}
 
 		var channels = await _graphServiceClient
-			.Teams[group.Id]
-			.Channels
+			.Me
+			.Todo
+			.Lists
 			.Request()
 			.Filter($"displayName eq '{chanelName}'")
 			.GetAsync();

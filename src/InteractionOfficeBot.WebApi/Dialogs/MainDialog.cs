@@ -6,8 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using InteractionOfficeBot.Core.Exception;
+using InteractionOfficeBot.Core.Model;
 using InteractionOfficeBot.Core.MsGraph;
-using InteractionOfficeBot.WebApi.Model;
 using InteractionOfficeBot.WebApi.Services;
 
 using Microsoft.Bot.Builder;
@@ -16,6 +16,7 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -160,21 +161,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			switch (result)
 			{
-				case ONEDRIVE_ROOT_CONTENTS:
-					await ShowOneDriveContents(stepContext, cancellationToken);
-					break;
-				case ONEDRIVE_FOLDER_CONTENTS:
-					await ShowOneDriveFolderContents(stepContext, cancellationToken, "vika_dura/alex loh");
-					break;
-				case ONEDRIVE_SEARCH:
-					await SearchOneDrive(stepContext, cancellationToken, "paris");
-					break;
-				case ONEDRIVE_DELETE:
-					await DeleteOneDrive(stepContext, cancellationToken, "vika dura/my-picture.jpeg");
-					break;
-				case ONEDRIVE_DOWNLOAD:
-					await DownloadOneDrive(stepContext, cancellationToken, "paris.xlsx");
-					break;
 				default:
 					switch (topIntent.intent)
 					{
@@ -219,18 +205,95 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 						case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
 							await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
 							break;
+						case LuisRoot.Intent.ONEDRIVE_ROOT_CONTENTS:
+							await ShowOneDriveContents(stepContext, cancellationToken);
+							break;
+						case LuisRoot.Intent.ONEDRIVE_FOLDER_CONTENTS:
+							await ShowOneDriveFolderContents(stepContext, cancellationToken, GetFolderPathFromEntity(recognizeResult) );
+							break;
+						case LuisRoot.Intent.ONEDRIVE_SEARCH:
+							await SearchOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.ONEDRIVE_DELETE:
+							await DeleteOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
+							await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
 
+						/////
+						case LuisRoot.Intent.GET_ALL_TODO_TASKS:
+							await GetAllTodoTasks(stepContext, cancellationToken);
+							break;
+						case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
+							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.CREATE_TODO_TASK:
+							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
 					}
 					break;
 			}
-
-
-
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
+		private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			List<TodoTaskEntity> todoTask;
+			try
+			{
+				todoTask = await client.TodoTask.GetTodoTasks();
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
+			foreach (var task in todoTask)
+			{
+				var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
+			}
+		}
+
 		#region Helpers
+
+		private static string GetFileFromEntity(LuisRoot recognizeResult)
+		{
+			var team = recognizeResult.Entities
+				?.Files
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (team == null)
+			{
+				throw new TeamsException("Can't recognize file");
+			}
+
+			return team;
+		}
+
+		private static string GetFolderPathFromEntity(LuisRoot recognizeResult)
+		{
+			var team = recognizeResult.Entities
+				?.Folder
+				?.FirstOrDefault()
+				?.Value
+				?.FirstOrDefault();
+
+			if (team == null)
+			{
+				throw new TeamsException("Can't recognize folder");
+			}
+
+			return team;
+		}
+
 		private static string GetTeamFromEntity(LuisRoot recognizeResult)
 		{
 			var team = recognizeResult.Entities
@@ -489,7 +552,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var channel in channels)
 			{
-				var chanelInfo = channel.DisplayName + " Link: " + channel.WebUrl;
+				var chanelInfo = channel.DisplayName + "\nLink: " + channel.WebUrl;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(chanelInfo), cancellationToken);
 			}
 		}
@@ -499,7 +562,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			List<ConversationMember> users;
+			IEnumerable<TeamsUserInfo> users;
 			try
 			{
 				users = await client.Teams.GetMembersOfTeams(testTeam);
@@ -512,7 +575,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName;
+				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}
@@ -544,7 +607,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			IGraphServiceUsersCollectionPage users;
+			IEnumerable<TeamsUserInfo> users;
 			try
 			{
 				users = await client.GetUsers();
@@ -557,7 +620,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " <" + user.Mail + ">";
+				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}
