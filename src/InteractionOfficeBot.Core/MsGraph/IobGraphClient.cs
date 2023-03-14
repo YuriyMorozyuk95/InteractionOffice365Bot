@@ -11,6 +11,8 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 	    private TeamsRepository? _teamsGroupRepository;
 
+        private TodoTaskRepository? _todoGroupRepository;
+
         public IobGraphClient(GraphServiceClient graphServiceClient)
         {
 	        _graphClient = graphServiceClient;
@@ -21,6 +23,11 @@ namespace InteractionOfficeBot.Core.MsGraph
         public TeamsRepository Teams
         {
 	        get { return _teamsGroupRepository ??= new TeamsRepository(_graphClient); }
+        }
+
+        public TodoTaskRepository TodoTask
+        {
+            get { return _todoGroupRepository ??= new TodoTaskRepository(_graphClient); }
         }
 
         // Sends an email on the users behalf using the Microsoft Graph API
