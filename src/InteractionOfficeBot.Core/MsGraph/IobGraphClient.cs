@@ -14,6 +14,8 @@ namespace InteractionOfficeBot.Core.MsGraph
 
         private OneDriveRepository? _oneDriveRepository;
 
+        private TodoTaskRepository? _todoGroupRepository;
+
         public IobGraphClient(GraphServiceClient graphServiceClient)
         {
 	        _graphClient = graphServiceClient;
@@ -29,6 +31,11 @@ namespace InteractionOfficeBot.Core.MsGraph
         public OneDriveRepository OneDrive
         {
             get => _oneDriveRepository ??= new OneDriveRepository(_graphClient);
+        }
+
+        public TodoTaskRepository TodoTask
+        {
+            get { return _todoGroupRepository ??= new TodoTaskRepository(_graphClient); }
         }
 
         // Sends an email on the users behalf using the Microsoft Graph API

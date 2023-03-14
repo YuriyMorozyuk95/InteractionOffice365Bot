@@ -221,11 +221,44 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 						case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
 							await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
 							break;
+
+						/////
+						case LuisRoot.Intent.GET_ALL_TODO_TASKS:
+							await GetAllTodoTasks(stepContext, cancellationToken);
+							break;
+						case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
+							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
+						case LuisRoot.Intent.CREATE_TODO_TASK:
+							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							break;
 					}
 					break;
 			}
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+		}
+
+		private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+		{
+			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			List<TodoTaskEntity> todoTask;
+			try
+			{
+				todoTask = await client.TodoTask.GetTodoTasks();
+			}
+			catch (TeamsException e)
+			{
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+				return;
+			}
+			foreach (var task in todoTask)
+			{
+				var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
+				await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
+			}
 		}
 
 		#region Helpers
