@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,7 +34,13 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 	    private const string SEND_EMAIL_TO_USER = "Please send email with subject: 'test' and message: 'Hello world' to user: 'victoria@8bpskq.onmicrosoft.com'";
 	    private const string INSTALLED_APP_FOR_USER = "Show me all installed applications in teams for user: 'victoria@8bpskq.onmicrosoft.com'";
 
-	    private const string GraphDialog = "GraphDialog";
+		private const string ONEDRIVE_ROOT_CONTENTS = "Show me files in OneDrive";
+        private const string ONEDRIVE_FOLDER_CONTENTS = "Show me files in folder : 'vika dura/alex loh'";
+        private const string ONEDRIVE_SEARCH = "Search for files : 'paris'";
+		private const string ONEDRIVE_DELETE = "Remove file : 'vika dura/my-picture.jpeg'";
+		private const string ONEDRIVE_DOWNLOAD = "Download file : 'vika dura/my-picture.jpeg;";
+
+        private const string GraphDialog = "GraphDialog";
 
 	    private readonly ILogger _logger;
         private readonly IStateService _stateService;
@@ -176,6 +184,21 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				case INSTALLED_APP_FOR_USER:
 					await ShowInstalledAppForUser(stepContext, cancellationToken, "victoria@8bpskq.onmicrosoft.com");
 					break;
+				case ONEDRIVE_ROOT_CONTENTS:
+					await ShowOneDriveContents(stepContext, cancellationToken);
+					break;
+				case ONEDRIVE_FOLDER_CONTENTS:
+					await ShowOneDriveFolderContents(stepContext, cancellationToken, "vika_dura/alex loh");
+					break;
+				case ONEDRIVE_SEARCH:
+					await SearchOneDrive(stepContext, cancellationToken, "paris");
+					break;
+				case ONEDRIVE_DELETE:
+					await DeleteOneDrive(stepContext, cancellationToken, "vika dura/my-picture.jpeg");
+					break;
+				case ONEDRIVE_DOWNLOAD:
+					await DownloadOneDrive(stepContext, cancellationToken, "paris.xlsx");
+					break;
 			}
 			
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
@@ -243,7 +266,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
-		}
+        }
 
 		private async Task RemoveTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName)
 		{
@@ -431,6 +454,122 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			}
 		}
 
-		#endregion GraphMessageHandlers
+		private async Task ShowOneDriveContents(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+		{
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+			IDriveItemChildrenCollectionPage driveItems;
+
+			try
+			{
+				driveItems = await client.OneDrive.GetRootContents();
+            }
+			catch (Exception e)
+			{
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
+            {
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
+            }
+        }
+
+        private async Task ShowOneDriveFolderContents(WaterfallStepContext stepContext, CancellationToken cancellationToken, string folderPath)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            IDriveItemChildrenCollectionPage driveItems;
+
+            try
+            {
+                driveItems = await client.OneDrive.GetFolderContents(folderPath);
+            }
+            catch (Exception e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
+            {
+                var displayString = driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name;
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
+            }
+        }
+
+        private async Task SearchOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string searchText)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            IEnumerable<DriveItem> driveItems;
+
+            try
+            {
+                driveItems = await client.OneDrive.SearchOneDrive(searchText);
+            }
+            catch (Exception e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null))
+            {
+                var displayString = Path.Combine(driveItem.ParentReference.Path, driveItem.Folder != null ? $"{driveItem.Name}/" : driveItem.Name);
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(displayString), cancellationToken);
+            }
+        }
+
+        private async Task DeleteOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            try
+            {
+                await client.OneDrive.RemoveFile(filePath);
+            }
+            catch (Exception e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+			var response = $"{filePath} deleted.";
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text(response), cancellationToken);
+        }
+
+        private async Task DownloadOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            DriveItem file;
+
+            try
+            {
+                file = await client.OneDrive.GetFile(filePath);
+            }
+            catch (Exception e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+			var attachment = new Microsoft.Bot.Schema.Attachment
+            {
+				ContentUrl = file.WebUrl,
+				Name = file.Name,
+			};
+            await stepContext.Context.SendActivityAsync(MessageFactory.Attachment(attachment), cancellationToken);
+        }
+
+        #endregion GraphMessageHandlers
     }
 }
