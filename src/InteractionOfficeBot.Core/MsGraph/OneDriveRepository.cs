@@ -28,7 +28,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 
         public async Task<IEnumerable<DriveItem>> SearchOneDrive(string searchText)
         {
-            var searchResults = await _graphServiceClient.Me.Drive.Search(searchText).Request().GetAsync();
+            var searchResults = await _graphServiceClient.Me.Drive.Search(searchText).Request().Select("Id").GetAsync();
 
             var batchRequestContent = new BatchRequestContent();
             List<string> requestIds = new List<string>();
