@@ -33,7 +33,7 @@ public class TodoTaskRepository
         var result = await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().GetAsync();
 
         var upcomingTasks = result
-	        .Where(x => x.ReminderDateTime == DateTimeTimeZone.FromDateTime(reminderTime?.Date ?? DateTime.Today))
+	        .Where(x => x.AdditionalData.Values.FirstOrDefault() == DateTimeTimeZone.FromDateTime(reminderTime?.Date ?? DateTime.Today))
             .Select(x => new TodoTaskEntity
             {
                 Title = x.Title,
@@ -56,7 +56,7 @@ public class TodoTaskRepository
             },
             Importance = Importance.High,
             IsReminderOn = true,
-            ReminderDateTime = DateTimeTimeZone.FromDateTime(reminderTime ?? DateTime.Today)
+            ReminderDateTime = DateTimeTimeZone.FromDateTime(reminderTime ?? DateTime.Today, "Pacific Standard Time")
         };
 
         await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().AddAsync(requestBody);
