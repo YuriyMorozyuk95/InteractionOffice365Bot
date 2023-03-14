@@ -16,6 +16,7 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -512,9 +513,11 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " Activity:" + user.Activity;
+				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
+
+			await stepContext.Context.SendActivityAsync(MessageFactory.Text("🔴 🟠 🟡 🟢 🔵 "), cancellationToken);
 		}
 
 		private async Task ShowAllTeams(WaterfallStepContext stepContext, CancellationToken cancellationToken)
