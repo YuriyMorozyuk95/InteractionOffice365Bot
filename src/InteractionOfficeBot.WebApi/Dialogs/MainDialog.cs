@@ -17,7 +17,6 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
@@ -221,16 +220,14 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 						case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
 							await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
 							break;
-
-						/////
 						case LuisRoot.Intent.GET_ALL_TODO_TASKS:
 							await GetAllTodoTasks(stepContext, cancellationToken);
 							break;
 						case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
-							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							await GetTodoUpcomingTask(stepContext, cancellationToken, GetTaskReminderTimeFromEntity(recognizeResult));
 							break;
 						case LuisRoot.Intent.CREATE_TODO_TASK:
-							//await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+							await CreateTodoTask(stepContext, cancellationToken, GetTaskTitleFromEntity(recognizeResult), GetTaskReminderTimeFromEntity(recognizeResult));
 							break;
 					}
 					break;
@@ -239,31 +236,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
 		}
 
-		private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+        #region Helpers
 
-			List<TodoTaskEntity> todoTask;
-			try
-			{
-				todoTask = await client.TodoTask.GetTodoTasks();
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-			foreach (var task in todoTask)
-			{
-				var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
-			}
-		}
-
-		#region Helpers
-
-		private static string GetFileFromEntity(LuisRoot recognizeResult)
+        private static string GetFileFromEntity(LuisRoot recognizeResult)
 		{
 			var team = recognizeResult.Entities
 				?.Files
@@ -375,11 +350,46 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			return channel;
 		}
 
-		#endregion 
+        private static string GetTaskTitleFromEntity(LuisRoot recognizeResult)
+        {
+            var title = recognizeResult.Entities
+                ?.Title
+                ?.FirstOrDefault()
+                ?.Value
+                ?.FirstOrDefault();
+
+            if (title == null)
+            {
+                throw new TeamsException("Can't recognize task");
+            }
+
+            return title;
+        }
+
+        private static DateTime GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
+        {
+            var reminderTime = recognizeResult.Entities
+                ?.ReminderTime
+                ?.FirstOrDefault()
+                ?.Value
+                ?.FirstOrDefault();
+
+            if (reminderTime == null)
+            {
+                throw new TeamsException("Can't recognize reminder time");
+			}
+
+            DateTime dt;
+            DateTime.TryParse(reminderTime, out dt);
+
+            return dt;
+        }
+
+        #endregion
 
 
-		#region GraphMessageHandlers
-		private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
+        #region GraphMessageHandlers
+        private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
 		{
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
@@ -755,6 +765,69 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			await stepContext.Context.SendActivityAsync(MessageFactory.Attachment(attachment), cancellationToken);
 		}
 
-		#endregion GraphMessageHandlers
-	}
+        private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            List<TodoTaskEntity> todoTask;
+            try
+            {
+                todoTask = await client.TodoTask.GetTodoTasks();
+            }
+            catch (TeamsException e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+            foreach (var task in todoTask)
+            {
+                var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
+            }
+        }
+
+        private async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime reminderTime)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            List<TodoTaskEntity> upcomingTodoTask;
+            try
+            {
+                upcomingTodoTask = await client.TodoTask.GetUpcomingTodoTasks(reminderTime);
+            }
+            catch (TeamsException e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+            foreach (var task in upcomingTodoTask)
+            {
+                var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
+            }
+        }
+
+        private async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime reminderTime)
+        {
+            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
+            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
+
+            try
+            {
+                await client.TodoTask.CreateTodoTask(title, reminderTime);
+            }
+            catch (TeamsException e)
+            {
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+                return;
+            }
+
+            await stepContext.Context.SendActivityAsync(MessageFactory.Text($"ToDo Task with title: {title} was created"), cancellationToken);
+        }
+
+
+        #endregion GraphMessageHandlers
+    }
 }

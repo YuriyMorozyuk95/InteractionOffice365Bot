@@ -14,9 +14,7 @@ public class TodoTaskRepository
 
     public async Task<List<TodoTaskEntity>> GetTodoTasks()
     {
-        var list = await _graphServiceClient.Me.Todo.Lists.Request().GetAsync();
-        var listId = list.FirstOrDefault().Id;
-
+        var listId = await GetListId();
         var result = await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().GetAsync();
 
         var todoTask = result.Select(x => new TodoTaskEntity
@@ -31,9 +29,7 @@ public class TodoTaskRepository
 
     public async Task<List<TodoTaskEntity>> GetUpcomingTodoTasks(DateTime? reminderTime)
     {
-        var list = await _graphServiceClient.Me.Todo.Lists.Request().GetAsync();
-        var listId = list.FirstOrDefault().Id;
-
+        var listId = await GetListId();
         var result = await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().GetAsync();
 
         var upcomingTasks = result
@@ -50,9 +46,7 @@ public class TodoTaskRepository
 
     public async Task CreateTodoTask(string title, DateTime? reminderTime)
     {
-        var list = await _graphServiceClient.Me.Todo.Lists.Request().GetAsync();
-        var listId = list.FirstOrDefault().Id;
-
+        var listId = await GetListId();
         var requestBody = new TodoTask
         {
             Title = title,
@@ -66,5 +60,12 @@ public class TodoTaskRepository
         };
 
         await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().AddAsync(requestBody);
+    }
+
+    private async Task<string> GetListId()
+    {
+        var list = await _graphServiceClient.Me.Todo.Lists.Request().GetAsync();
+        var listId = list.FirstOrDefault().Id;
+        return listId;
     }
 }
