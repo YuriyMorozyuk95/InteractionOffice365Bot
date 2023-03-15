@@ -4,7 +4,6 @@ using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder;
 using Microsoft.Graph;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
@@ -18,6 +17,7 @@ using Newtonsoft.Json;
 using File = System.IO.File;
 using AdaptiveCards;
 using Microsoft.Bot.Schema;
+using InteractionOfficeBot.Core.Extensions;
 
 namespace InteractionOfficeBot.WebApi.Helper
 {
@@ -315,12 +315,10 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			var sb = new StringBuilder();
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+			foreach (var driveItem in driveItems.Where(x => x.IsFileOrFolder()).OrderBy(x => x.File != null ? 1 : 0))
 			{
-				var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
-				sb.Append(displayString);
-				sb.Append(Environment.NewLine);
-				sb.Append(Environment.NewLine);
+                var displayString = $"<a href=\"{driveItem.WebUrl}\">{driveItem.GetDisplayName()}</a><br/>";
+                sb.Append(displayString);
 			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -344,12 +342,10 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			var sb = new StringBuilder();
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+			foreach (var driveItem in driveItems.Where(x => x.IsFileOrFolder()).OrderBy(x => x.File != null ? 1 : 0))
 			{
-				var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
+				var displayString = $"<a href=\"{driveItem.WebUrl}\">{driveItem.GetDisplayName()}</a><br/>";
 				sb.Append(displayString);
-				sb.Append(Environment.NewLine);
-				sb.Append(Environment.NewLine);
 			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -373,12 +369,10 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			var sb = new StringBuilder();
 
-			foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
+			foreach (var driveItem in driveItems.Where(x => x.IsFileOrFolder()).OrderBy(x => x.File != null ? 1 : 0))
 			{
-				var displayString = Path.Combine(driveItem.ParentReference.Path, driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name);
-				sb.Append(displayString);
-				sb.Append(Environment.NewLine);
-				sb.Append(Environment.NewLine);
+                var displayString = $"<a href=\"{driveItem.WebUrl}\">{driveItem.GetFullPath()}</a><br/>";
+                sb.Append(displayString);
 			}
 
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
