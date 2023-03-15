@@ -29,11 +29,35 @@ public class TodoTaskRepository
 
     public async Task<List<TodoTaskEntity>> GetUpcomingTodoTasks(DateTime? reminderTime)
     {
+	    string? reminderTimeFrom;
+	    string? reminderTimeTo;
+
+	    if (reminderTime != null)
+	    {
+		    var universalDateTime = reminderTime.Value.ToUniversalTime();
+
+		    var from = universalDateTime.Date;
+		    var to = universalDateTime.Date.AddDays(1);
+
+		    //TODO try "u"
+		    string fromat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+		    var reminderTimeStart = from.ToString(fromat);
+            var reminderTimeTo = to.ToString(fromat);
+
+	    }
+
         var listId = await GetListId();
-        var result = await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().GetAsync();
+        var result = await _graphServiceClient
+	        .Me
+	        .Todo
+	        .Lists[listId]
+	        .Tasks
+	        .Request()
+	        .Filter("reminderDateTime/dateTime gt '2022-07-15T01:30:00Z'")
+	        .GetAsync();
 
         var upcomingTasks = result
-	        .Where(x => x.AdditionalData.Values.FirstOrDefault() == DateTimeTimeZone.FromDateTime(reminderTime?.Date ?? DateTime.Today))
             .Select(x => new TodoTaskEntity
             {
                 Title = x.Title,

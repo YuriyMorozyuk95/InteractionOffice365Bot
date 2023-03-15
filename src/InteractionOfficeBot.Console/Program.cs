@@ -12,6 +12,8 @@ namespace InteractionOfficeBot.Console
 	{
 		public static async Task Main(string[] args)
 		{
+			var a = new DateTime(2022, 07, 15, 01, 30, 00, DateTimeKind.Utc).ToUniversalTime();
+			var b = a.ToString("u");
 			var serviceProvider = CreateServiceProvider();
 
 			var factory = serviceProvider.GetRequiredService<IGraphServiceClientFactory>();
@@ -20,13 +22,13 @@ namespace InteractionOfficeBot.Console
 			var token = await GetUserToken(scopes);
             var client = factory.CreateClientFromUserBeHalf(token);
 
-            var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
+            //var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
 
-            foreach (var user in a)
-            {
-	            var userInfo = user.DisplayName + " Activity:" + user.Activity;
-	            System.Console.WriteLine(userInfo);
-            }
+            //foreach (var user in a)
+            //{
+	           // var userInfo = user.DisplayName + " Activity:" + user.Activity;
+	           // System.Console.WriteLine(userInfo);
+            //}
 
             System.Console.ReadKey();
 		}
