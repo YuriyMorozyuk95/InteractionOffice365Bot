@@ -53,6 +53,7 @@ How to test:
 For testing project you need to have accaunt in our tenant. Please write me email[Yurii.Moroziuk@hotmail.com] and I will proovide credentials for you.  
 
 1)	Firstly you need log in to Teams and install InteractionOfficeBot.
+2) Details about testing will be added later
 
 ![gotovo1](https://user-images.githubusercontent.com/27745979/225170441-e454a85b-e5ab-45dc-aca7-ad3295ca6c88.gif)
 
