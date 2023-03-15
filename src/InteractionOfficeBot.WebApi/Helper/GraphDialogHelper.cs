@@ -334,6 +334,22 @@ namespace InteractionOfficeBot.WebApi.Helper
 			{
 				driveItems = await client.OneDrive.GetFolderContents(folderPath);
 			}
+			catch (ServiceException e)
+			{
+				string message;
+
+				if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+					message = "File not found";
+                }
+				else
+				{
+					message = e.Message;
+				}
+
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(message), cancellationToken);
+				return;
+            }
 			catch (Exception e)
 			{
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
@@ -386,7 +402,23 @@ namespace InteractionOfficeBot.WebApi.Helper
 			{
 				await client.OneDrive.RemoveFile(filePath);
 			}
-			catch (Exception e)
+            catch (ServiceException e)
+            {
+                string message;
+
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    message = "File not found";
+                }
+                else
+                {
+                    message = e.Message;
+                }
+
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(message), cancellationToken);
+                return;
+            }
+            catch (Exception e)
 			{
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
 				return;
@@ -406,7 +438,23 @@ namespace InteractionOfficeBot.WebApi.Helper
 			{
 				file = await client.OneDrive.GetFile(filePath);
 			}
-			catch (Exception e)
+            catch (ServiceException e)
+            {
+                string message;
+
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    message = "File not found";
+                }
+                else
+                {
+                    message = e.Message;
+                }
+
+                await stepContext.Context.SendActivityAsync(MessageFactory.Text(message), cancellationToken);
+                return;
+            }
+            catch (Exception e)
 			{
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
 				return;
