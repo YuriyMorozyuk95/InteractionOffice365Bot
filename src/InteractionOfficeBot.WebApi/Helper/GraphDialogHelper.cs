@@ -26,7 +26,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 		Task CreateChanelForTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName);
 		Task CreateTeamFor(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string userEmail);
 		Task ChanelOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName);
-		Task MemeberOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam);
+		Task MembersOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam);
 		Task ShowAllTeams(WaterfallStepContext stepContext, CancellationToken cancellationToken);
 		Task ShowAllUsers(WaterfallStepContext stepContext, CancellationToken cancellationToken);
 		Task ShowOneDriveContents(WaterfallStepContext stepContext, CancellationToken cancellationToken);
@@ -38,7 +38,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 		Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime? reminderTime);
 		Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime? reminderTime);
 	}
-	internal class GraphDialogHelper
+	internal class GraphDialogHelper : IGraphDialogHelper
 	{
 		private readonly IStateService _stateService;
 		private readonly IGraphServiceClientFactory _factory;
@@ -385,7 +385,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 				return;
 			}
 
-			var response = $"{filePath} deleted.";
+            var response = $"{filePath} deleted.";
 			await stepContext.Context.SendActivityAsync(MessageFactory.Text(response), cancellationToken);
 		}
 

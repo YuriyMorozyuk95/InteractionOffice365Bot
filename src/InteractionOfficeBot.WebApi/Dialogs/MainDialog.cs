@@ -166,7 +166,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 					await _graphDialogHelper.ShowAllTeams(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
-					await _graphDialogHelper.MemeberOfTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
+					await _graphDialogHelper.MembersOfTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
 					await _graphDialogHelper.ChanelOfTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
