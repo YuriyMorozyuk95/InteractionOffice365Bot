@@ -6,7 +6,8 @@ namespace InteractionOfficeBot.Core.Extensions
     {
         public static string GetFullPath(this DriveItem driveItem)
         {
-            var folderPath = driveItem.ParentReference?.Path.Substring(driveItem.ParentReference.Path.IndexOf(':') + 1) ?? "/";
+            var folderPath = driveItem.ParentReference?.Path.Substring(driveItem.ParentReference.Path.IndexOf(':') + 1);
+            folderPath = string.IsNullOrEmpty(folderPath) ? "/" : folderPath;   // if parent is root, add slash
             var fileName = driveItem.GetDisplayName();
 
             return string.Join("/", new[] { folderPath, fileName }.Where(x => !string.IsNullOrEmpty(x)));
