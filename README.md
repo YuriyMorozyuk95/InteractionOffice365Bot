@@ -21,33 +21,33 @@ Main project dependecy:
 Team:
 
 Yurii Moroziuk – Project Lead/.Net Developer/DevOps
-
 Email: Yurii.Moroziuk@hotmail.com
-Credy: Yurii Moroziuk - Badges - Credly
-Git Hub: YuriyMorozyuk95 (Yurii.Moroziuk) (github.com)
+Credy: https://www.credly.com/users/yurii-moroziuk/badges
+Git Hub: https://github.com/YuriyMorozyuk95
+
 
 Alexander Perebaskin - .Net Developer
-
 Email: alx875@gmail.com
-Credy: Alexander Perebaskin - Badges - Credly
-Git Hub: alx875 (github.com)
+Credy: https://www.credly.com/users/alexander-perebaskin/badges
+Git Hub: https://github.com/alx875
+
 
 Christina Ozarko - .Net Developer
 Email: christinaozarko@gmail.com
 Credy: 
-Git Hub: KhrystynaOX (Khrystyna) (github.com)
+Git Hub: https://github.com/KhrystynaOX
 
 
 Victoria Sisina [Victoria Efrosha] – QA and AI engineer 
 Email: victoria.naffato@gmail.com 
 Credy: Viktoria Šišina - Badges - Credly
-Git Hub: https://github.com/Efrosha
+Git Hub: https://www.credly.com/users/viktoria-sisina/badges
 
 
-Project repository: YuriyMorozyuk95/InteractionOfficeBot (github.com)
-Project board: Interaction Office365 Bot (github.com)
-GitHub Workflow action to deploy project: Actions · YuriyMorozyuk95/InteractionOfficeBot (github.com)
-Endpoints: Teams Sample (iob-webapi.azurewebsites.net)
+Project repository: https://github.com/YuriyMorozyuk95/InteractionOfficeBot
+Project board: https://github.com/users/YuriyMorozyuk95/projects/1
+GitHub Workflow action to deploy project: https://github.com/YuriyMorozyuk95/InteractionOfficeBot/actions/workflows/azure-webapps-dotnet-core.yml
+Endpoints: https://iob-webapi.azurewebsites.net/
 
 How to test:
 For testing project you need to have accaunt in our tenant. Please write me email[Yurii.Moroziuk@hotmail.com] and I will proovide credentials for you.  
