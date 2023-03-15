@@ -4,8 +4,6 @@
 
 [![Hack Together: Microsoft Graph and .NET](https://img.shields.io/badge/Microsoft%20-Hack--Together-orange?style=for-the-badge&logo=microsoft)](https://github.com/microsoft/hack-together)
 
-Interactive Office Bot 
-
 This bot is designed to complete different command in Microsoft Office 365 tenant, write on humen language which will be translated by Azure Cognitive services luis to Microsoft Graph actions. For example, interaction with Teams, Outlook, OneDrive or Microsoft ToDo.
 
 Technical summary
