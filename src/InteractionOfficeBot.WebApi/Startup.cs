@@ -1,6 +1,7 @@
 ﻿using InteractionOfficeBot.Core.MsGraph;
 using InteractionOfficeBot.WebApi.Bots;
 using InteractionOfficeBot.WebApi.Dialogs;
+using InteractionOfficeBot.WebApi.Helper;
 using InteractionOfficeBot.WebApi.Services;
 
 using Microsoft.AspNetCore;
@@ -46,6 +47,8 @@ namespace InteractionOfficeBot.WebApi
 
             // Create the Conversation state. (Used by the Dialog system itself.)
             services.AddSingleton<ConversationState>();
+
+            services.AddSingleton<IGraphDialogHelper, GraphDialogHelper>();
 
             // The Dialog that will be run by the bot.
             services.AddSingleton<MainDialog>();
