@@ -4,11 +4,11 @@
 
 [![Hack Together: Microsoft Graph and .NET](https://img.shields.io/badge/Microsoft%20-Hack--Together-orange?style=for-the-badge&logo=microsoft)](https://github.com/microsoft/hack-together)
 
-This bot is designed to complete different command in Microsoft Office 365 tenant, write on humen language which will be translated by Azure Cognitive services luis to Microsoft Graph actions. For example, interaction with Teams, Outlook, OneDrive or Microsoft ToDo.
+This bot is designed to complete different command in Microsoft Office 365 tenant, write on human language which will be translated by Azure Cognitive services Luis to Microsoft Graph actions. For example, interaction with Teams, Outlook, OneDrive or Microsoft ToDo.
 
 Technical summary
 
-Main project dependecy:
+Main project dependencies:
 -	.NET 7
 -	Asp.Net Core 5
 -	Microsoft.Graph 4.54 
@@ -19,27 +19,27 @@ Main project dependecy:
 Team:
 
 Yurii Moroziuk – Project Lead/.Net Developer/DevOps
-Email: Yurii.Moroziuk@hotmail.com
-Credy: https://www.credly.com/users/yurii-moroziuk/badges
-Git Hub: https://github.com/YuriyMorozyuk95
+E-mail: Yurii.Moroziuk@hotmail.com
+Credly: https://www.credly.com/users/yurii-moroziuk/badges
+GitHub: https://github.com/YuriyMorozyuk95
 
 
 Alexander Perebaskin - .Net Developer
-Email: alx875@gmail.com
-Credy: https://www.credly.com/users/alexander-perebaskin/badges
-Git Hub: https://github.com/alx875
+E-mail: alx875@gmail.com
+Credly: https://www.credly.com/users/alexander-perebaskin/badges
+GitHub: https://github.com/alx875
 
 
 Christina Ozarko - .Net Developer
-Email: christinaozarko@gmail.com
-Credy: 
-Git Hub: https://github.com/KhrystynaOX
+E-mail: christinaozarko@gmail.com
+Credly: 
+GitHub: https://github.com/KhrystynaOX
 
 
-Victoria Sisina [Victoria Efrosha] – QA and AI engineer 
-Email: victoria.naffato@gmail.com 
-Credy: Viktoria Šišina - Badges - Credly
-Git Hub: https://www.credly.com/users/viktoria-sisina/badges
+Viktoria Sisina [Victoria Efrosha] – QA and AI engineer 
+E-mail: victoria.naffato@gmail.com 
+Credly: https://www.credly.com/users/viktoria-sisina
+Git Hub: https://github.com/Efrosha
 
 
 Project repository: https://github.com/YuriyMorozyuk95/InteractionOfficeBot
@@ -48,9 +48,9 @@ GitHub Workflow action to deploy project: https://github.com/YuriyMorozyuk95/Int
 Endpoints: https://iob-webapi.azurewebsites.net/
 
 How to test:
-For testing project you need to have accaunt in our tenant. Please write me email[Yurii.Moroziuk@hotmail.com] and I will proovide credentials for you.  
+For testing project you need to have account in our tenant. Please write me e-mail[Yurii.Moroziuk@hotmail.com] and I will provide credentials for you.  
 
-1)	Firstly you need log in to Teams and install InteractionOfficeBot.
+1)	Firstly you must log in to Teams and install InteractionOfficeBot.
 2) Details about testing will be added later
 
 ![gotovo1](https://user-images.githubusercontent.com/27745979/225170441-e454a85b-e5ab-45dc-aca7-ad3295ca6c88.gif)
