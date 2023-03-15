@@ -1,0 +1,55 @@
+{
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "Image",
+              "style": "Person",
+              //"url": "${ImageUrl}",
+              "url": "https://yt3.ggpht.com/ytc/AL5GRJWAkCism3dr3dsuid7MHIL5g6wmCXf0eJofLy7J=s68-c-k-c0x00ffffff-no-rj",
+              "size": "Small"
+            }
+          ],
+          "width": "auto"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "weight": "Bolder",
+              "text": "${DisplayName}",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "spacing": "None",
+              //"text": "${Position}",
+              "text": "Position",
+              "isSubtle": true,
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "${ColorEmoji}",
+              "wrap": true
+            },
+            {
+              "type": "TextBlock",
+              "text": "${Activity}",
+              "wrap": true
+            }
+          ],
+          "width": "stretch"
+        }
+      ]
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.4"
+}

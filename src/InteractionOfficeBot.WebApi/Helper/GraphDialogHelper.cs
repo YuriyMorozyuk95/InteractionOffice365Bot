@@ -12,6 +12,12 @@ using System;
 using System.Linq;
 using InteractionOfficeBot.WebApi.Services;
 using InteractionOfficeBot.Core.MsGraph;
+using System.Reflection;
+using AdaptiveCards.Templating;
+using Newtonsoft.Json;
+using File = System.IO.File;
+using AdaptiveCards;
+using Microsoft.Bot.Schema;
 
 namespace InteractionOfficeBot.WebApi.Helper
 {
@@ -277,12 +283,19 @@ namespace InteractionOfficeBot.WebApi.Helper
 				return;
 			}
 
+			var template = await CardFactory.GetUserCardTemplate(cancellationToken);
+
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+				var activity = CardFactory.CreateUserActivity(template, user);
+				await stepContext.Context.SendActivityAsync(activity, cancellationToken);
 			}
 		}
+
+		
+
+		//TODO to CardHelper
+		
 
 		public async Task ShowOneDriveContents(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{

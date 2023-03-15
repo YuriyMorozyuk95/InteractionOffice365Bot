@@ -1,9 +1,13 @@
-﻿using InteractionOfficeBot.Core.MsGraph;
-
+﻿using AdaptiveCards.Templating;
+using InteractionOfficeBot.Core.Exception;
+using InteractionOfficeBot.Core.Model;
+using InteractionOfficeBot.Core.MsGraph;
+using Microsoft.Bot.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Directory = System.IO.Directory;
 using Microsoft.Identity.Client;
+using System.Threading;
 
 
 namespace InteractionOfficeBot.Console
@@ -20,12 +24,33 @@ namespace InteractionOfficeBot.Console
 			var token = await GetUserToken(scopes);
             var client = factory.CreateClientFromUserBeHalf(token);
 
-            var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
+            //var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
 
-            foreach (var user in a)
+            //foreach (var user in a)
+            //{
+	           // var userInfo = user.DisplayName + " Activity:" + user.Activity;
+	           // System.Console.WriteLine(userInfo);
+            //}
+
+            IEnumerable<TeamsUserInfo> users;
+            try
             {
-	            var userInfo = user.DisplayName + " Activity:" + user.Activity;
-	            System.Console.WriteLine(userInfo);
+	            users = await client.GetUsers();
+            }
+            catch (TeamsException e)
+            {
+	            //await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
+	            return;
+            }
+
+            var path = Path.Combine(Environment.CurrentDirectory, @"AdaptiveCard", "UserCard.json");
+            
+            var templateJson = await File.ReadAllTextAsync(path);
+            var template = new AdaptiveCardTemplate(templateJson);
+
+            foreach (var user in users)
+            {
+	            var cardJson = template.Expand(user);
             }
 
             System.Console.ReadKey();
