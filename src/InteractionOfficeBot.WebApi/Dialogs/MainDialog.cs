@@ -159,86 +159,77 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var recognizeResult = await _luisService.Recognize(stepContext.Context, cancellationToken);
 			var topIntent = recognizeResult.TopIntent();
 
-			switch (result)
+			switch (topIntent.intent)
 			{
-				default:
-					switch (topIntent.intent)
+				case LuisRoot.Intent.ALL_USER_REQUEST:
+					await ShowAllUsers(stepContext, cancellationToken);
+					break;
+				case LuisRoot.Intent.ALL_TEAMS_REQUEST:
+					await ShowAllTeams(stepContext, cancellationToken);
+					break;
+				case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
 					{
-						case LuisRoot.Intent.ALL_USER_REQUEST:
-							await ShowAllUsers(stepContext, cancellationToken);
-							break;
-						case LuisRoot.Intent.ALL_TEAMS_REQUEST:
-							await ShowAllTeams(stepContext, cancellationToken);
-							break;
-						case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
-							{
-								await MemeberOfTeam(
-									stepContext,
-									cancellationToken,
-									GetTeamFromEntity(recognizeResult));
-								break;
-							}
-						case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
-							await ChanelOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.CREATE_TEAM:
-							await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetUserFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.CREATE_CHANNEL:
-							await CreateChanelForTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.MEMBER_CHANNEL:
-							await MemberOfChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.REMOVE_CHANNEL:
-							await RemoveChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.REMOVE_TEAM:
-							await RemoveTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.SEND_MESSAGE_TO_CHANEL:
-							await SendMessageToChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.SEND_EMAIL_TO_USER:
-							await SendEmailToUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult), GetEmailSubjectFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
-							await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.ONEDRIVE_ROOT_CONTENTS:
-							await ShowOneDriveContents(stepContext, cancellationToken);
-							break;
-						case LuisRoot.Intent.ONEDRIVE_FOLDER_CONTENTS:
-							await ShowOneDriveFolderContents(stepContext, cancellationToken, GetFolderPathFromEntity(recognizeResult) );
-							break;
-						case LuisRoot.Intent.ONEDRIVE_SEARCH:
-							await SearchOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.ONEDRIVE_DELETE:
-							await DeleteOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
-							await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.GET_ALL_TODO_TASKS:
-							await GetAllTodoTasks(stepContext, cancellationToken);
-							break;
-						case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
-							await GetTodoUpcomingTask(stepContext, cancellationToken, GetTaskReminderTimeFromEntity(recognizeResult));
-							break;
-						case LuisRoot.Intent.CREATE_TODO_TASK:
-							await CreateTodoTask(stepContext, cancellationToken, GetTaskTitleFromEntity(recognizeResult), GetTaskReminderTimeFromEntity(recognizeResult));
-							break;
+						await MemeberOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
+						break;
 					}
+				case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
+					await ChanelOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.CREATE_TEAM:
+					await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetUserFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.CREATE_CHANNEL:
+					await CreateChanelForTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.MEMBER_CHANNEL:
+					await MemberOfChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.REMOVE_CHANNEL:
+					await RemoveChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.REMOVE_TEAM:
+					await RemoveTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.SEND_MESSAGE_TO_CHANEL:
+					await SendMessageToChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.SEND_EMAIL_TO_USER:
+					await SendEmailToUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult), GetEmailSubjectFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
+					await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.ONEDRIVE_ROOT_CONTENTS:
+					await ShowOneDriveContents(stepContext, cancellationToken);
+					break;
+				case LuisRoot.Intent.ONEDRIVE_FOLDER_CONTENTS:
+					await ShowOneDriveFolderContents(stepContext, cancellationToken, GetFolderPathFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.ONEDRIVE_SEARCH:
+					await SearchOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.ONEDRIVE_DELETE:
+					await DeleteOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
+					await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.GET_ALL_TODO_TASKS:
+					await GetAllTodoTasks(stepContext, cancellationToken);
+					break;
+				case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
+					await GetTodoUpcomingTask(stepContext, cancellationToken, GetTaskReminderTimeFromEntity(recognizeResult));
+					break;
+				case LuisRoot.Intent.CREATE_TODO_TASK:
+					await CreateTodoTask(stepContext, cancellationToken, GetTaskTitleFromEntity(recognizeResult), GetTaskReminderTimeFromEntity(recognizeResult));
 					break;
 			}
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text("type something to continue"), cancellationToken);
-			return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
+			return await stepContext.BeginDialogAsync(InitialDialogId, null, cancellationToken);
 		}
 
-        #region Helpers
+		#region Helpers
 
-        private static string GetFileFromEntity(LuisRoot recognizeResult)
+		private static string GetFileFromEntity(LuisRoot recognizeResult)
 		{
 			var team = recognizeResult.Entities
 				?.Files
@@ -387,7 +378,6 @@ namespace InteractionOfficeBot.WebApi.Dialogs
         }
 
         #endregion
-
 
         #region GraphMessageHandlers
         private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
