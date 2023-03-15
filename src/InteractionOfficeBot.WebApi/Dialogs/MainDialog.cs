@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,8 +17,6 @@ using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-using Attachment = Microsoft.Bot.Schema.Attachment;
-
 namespace InteractionOfficeBot.WebApi.Dialogs
 {
 	public class MainDialog : LogoutDialog
@@ -651,6 +650,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                 var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
                 sb.Append(displayString);
                 sb.Append(Environment.NewLine);
+                sb.Append(Environment.NewLine);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -680,6 +680,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
                 var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
                 sb.Append(displayString);
                 sb.Append(Environment.NewLine);
+                sb.Append(Environment.NewLine);
             }
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
@@ -706,8 +707,9 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
             foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
             {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
+                var displayString = Path.Combine(driveItem.ParentReference.Path, driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name);
                 sb.Append(displayString);
+                sb.Append(Environment.NewLine);
                 sb.Append(Environment.NewLine);
             }
 
@@ -740,7 +742,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			DriveItem file;
 
-			try
+            try
 			{
 				file = await client.OneDrive.GetFile(filePath);
 			}
@@ -750,14 +752,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				return;
 			}
 
-            var reply = MessageFactory.Text("Here is your file.");
-			var attachment = new Attachment
-			{
-				ContentUrl = file.WebUrl,
-				ContentType = file.File.MimeType,
-				Name = file.Name,
-			};
-            reply.Attachments = new List<Attachment>() { attachment };
+			var reply = MessageFactory.Text($"<a href=\"{file.WebUrl}\">{file.Name}</a>");
 
 			await stepContext.Context.SendActivityAsync(reply, cancellationToken);
 		}
