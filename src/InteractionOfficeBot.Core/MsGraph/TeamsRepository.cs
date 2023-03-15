@@ -116,7 +116,7 @@ public class TeamsRepository
 			.AddAsync(requestBody);
 	}
 
-	public async Task<List<ConversationMember>> GetMembersOfChannelFromTeam(string teamName, string chanelName)
+	public async Task<IEnumerable<TeamsUserInfo>> GetMembersOfChannelFromTeam(string teamName, string chanelName)
 	{
 		var group = await GetTeam(teamName);
 
@@ -129,7 +129,15 @@ public class TeamsRepository
 			.Request()
 			.GetAsync();
 
-		return members.ToList();
+		var result = await _graphServiceClient.Communications.GetPresencesByUserId(members.Select(x => ((AadUserConversationMember)x).UserId)).Request().PostAsync();
+
+		var member = result.Select(x => new TeamsUserInfo
+		{
+			DisplayName = members.FirstOrDefault(m => ((AadUserConversationMember)m).UserId == x.Id)?.DisplayName,
+			Activity = x.Activity,
+		}).OrderBy(x => x.Activity);
+
+		return member;
 	}
 
 	public async Task RemoveChannelFromTeam(string teamName, string chanelName)

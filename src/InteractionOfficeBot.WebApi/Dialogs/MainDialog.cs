@@ -482,7 +482,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
 			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
 
-			List<ConversationMember> users;
+			IEnumerable<TeamsUserInfo> users;
 			try
 			{
 				users = await client.Teams.GetMembersOfChannelFromTeam(teamName, channelName);
@@ -495,7 +495,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName;
+				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
 				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
 			}
 		}

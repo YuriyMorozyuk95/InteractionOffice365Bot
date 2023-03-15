@@ -15,6 +15,11 @@ public class TeamsUserInfo
 					return "🟢";
 				case "Busy":
 				case "DoNotDisturb":
+				case "InACall":
+				case "InAConferenceCall":
+				case "InAMeeting":
+				case "Presenting":
+				case "UrgentInterruptionsOnly":
 					return "🔴";
 				case "BeRightBack":
 				case "Away":
