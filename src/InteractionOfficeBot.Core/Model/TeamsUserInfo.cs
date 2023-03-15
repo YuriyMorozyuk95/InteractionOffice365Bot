@@ -4,6 +4,8 @@ public class TeamsUserInfo
 {
 	public string? DisplayName { get; set; }
 	public string? Activity { get; set; }
+	public string? ImageUrl { get; set; }
+	public string? Position { get; set; }
 
 	public string ColorEmoji
 	{

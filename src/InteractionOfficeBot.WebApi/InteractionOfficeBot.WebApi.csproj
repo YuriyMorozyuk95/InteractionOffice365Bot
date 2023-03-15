@@ -23,4 +23,8 @@
     <ProjectReference Include="..\InteractionOfficeBot.Core\InteractionOfficeBot.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="AdaptiveCard\" />
+  </ItemGroup>
+
 </Project>
