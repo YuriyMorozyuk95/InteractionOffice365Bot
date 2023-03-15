@@ -33,7 +33,10 @@ public class TeamsRepository
 			.Request()
 			.GetAsync();
 
-		var result = await _graphServiceClient.Communications.GetPresencesByUserId(members.Select(x => ((AadUserConversationMember)x).UserId)).Request().PostAsync();
+		var result = await _graphServiceClient.Communications
+			.GetPresencesByUserId(members.Select(x => ((AadUserConversationMember)x).UserId))
+			.Request()
+			.PostAsync();
 
 		var teamsUserInfo = result.Select(x => new TeamsUserInfo
 		{

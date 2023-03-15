@@ -25,7 +25,7 @@ namespace InteractionOfficeBot.WebApi.Services
 		{
 			var cardJson = cardTemplate.Expand(teamsUserInfo);
 
-			var attachment = new Microsoft.Bot.Schema.Attachment()
+			var attachment = new Attachment()
 			{
 				ContentType = AdaptiveCard.ContentType,
 				Content = JsonConvert.DeserializeObject(cardJson),
@@ -33,7 +33,7 @@ namespace InteractionOfficeBot.WebApi.Services
 
 			var activity = new Activity
 			{
-				Attachments = new List<Microsoft.Bot.Schema.Attachment>() { attachment },
+				Attachments = new List<Attachment>() { attachment },
 				Type = ActivityTypes.Message
 			};
 

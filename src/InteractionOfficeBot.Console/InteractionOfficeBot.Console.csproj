@@ -44,4 +44,10 @@
     <ProjectReference Include="..\InteractionOfficeBot.Core\InteractionOfficeBot.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Img\FunnyAvatar.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

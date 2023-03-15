@@ -27,4 +27,10 @@
     <Folder Include="AdaptiveCard\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Img\FunnyAvatar.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

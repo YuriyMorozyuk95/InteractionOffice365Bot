@@ -24,13 +24,6 @@ namespace InteractionOfficeBot.Console
 			var token = await GetUserToken(scopes);
             var client = factory.CreateClientFromUserBeHalf(token);
 
-            //var a = await client.Teams.GetMembersOfTeams("Mark 8 Project Team");
-
-            //foreach (var user in a)
-            //{
-	           // var userInfo = user.DisplayName + " Activity:" + user.Activity;
-	           // System.Console.WriteLine(userInfo);
-            //}
 
             IEnumerable<TeamsUserInfo> users;
             try

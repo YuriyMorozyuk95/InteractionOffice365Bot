@@ -162,10 +162,12 @@ namespace InteractionOfficeBot.WebApi.Helper
 				return;
 			}
 
+			var template = await CardFactory.GetUserCardTemplate(cancellationToken);
+
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+				var activity = CardFactory.CreateUserActivity(template, user);
+				await stepContext.Context.SendActivityAsync(activity, cancellationToken);
 			}
 		}
 
@@ -240,10 +242,13 @@ namespace InteractionOfficeBot.WebApi.Helper
 				return;
 			}
 
+			var template = await CardFactory.GetUserCardTemplate(cancellationToken);
+
 			foreach (var user in users)
 			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
+				var activity = CardFactory.CreateUserActivity(template, user);
+				await stepContext.Context.SendActivityAsync(activity, cancellationToken);
+
 			}
 		}
 
@@ -291,11 +296,6 @@ namespace InteractionOfficeBot.WebApi.Helper
 				await stepContext.Context.SendActivityAsync(activity, cancellationToken);
 			}
 		}
-
-		
-
-		//TODO to CardHelper
-		
 
 		public async Task ShowOneDriveContents(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{

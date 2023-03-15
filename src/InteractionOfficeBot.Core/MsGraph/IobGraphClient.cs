@@ -2,6 +2,7 @@
 
 using System.Threading.Tasks;
 using InteractionOfficeBot.Core.Model;
+using File = System.IO.File;
 
 namespace InteractionOfficeBot.Core.MsGraph
 {
@@ -106,13 +107,33 @@ namespace InteractionOfficeBot.Core.MsGraph
 
 	        var result = await _graphClient.Communications.GetPresencesByUserId(users.Select(x => x.Id)).Request().PostAsync();
 
-	        var teamsUserInfo = result.Select(x => new TeamsUserInfo
+	        var list = new List<TeamsUserInfo>();
+	        foreach (var user in users)
 	        {
-		        DisplayName = users.FirstOrDefault(m => m.Id == x.Id)?.DisplayName,
-		        Activity = x.Activity,
-	        }).OrderBy(x => x.Activity);
+		        byte[] imageBytes;
+		        try
+		        {
+			        var photoStream = await _graphClient.Users[user.Id].Photo.Content.Request().GetAsync();
+			        imageBytes = new byte[photoStream.Length];
+			        await photoStream.ReadAsync(imageBytes, 0, imageBytes.Length);
+		        }
+		        catch
+		        {
+			        var path = Path.Combine(Environment.CurrentDirectory, @"Img", "FunnyAvatar.png");
+			        imageBytes = await File.ReadAllBytesAsync(path);
+		        }
 
-	        return teamsUserInfo;
+		        string actualUrl = "data:image/gif;base64," + string.Join("", imageBytes);
+
+		        list.Add(new TeamsUserInfo
+		        {
+			        DisplayName = user.DisplayName,
+			        Activity = result.FirstOrDefault(m => user.Id == m.Id)?.Activity,
+			        ImageUrl = actualUrl,
+		        });
+	        }
+
+	        return list.OrderBy(x => x.Activity);
         }
 
         public async Task<User> GetMyUsers()

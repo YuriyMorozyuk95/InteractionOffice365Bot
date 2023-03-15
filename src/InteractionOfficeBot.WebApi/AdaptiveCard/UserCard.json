@@ -10,8 +10,7 @@
             {
               "type": "Image",
               "style": "Person",
-              //"url": "${ImageUrl}",
-              "url": "https://yt3.ggpht.com/ytc/AL5GRJWAkCism3dr3dsuid7MHIL5g6wmCXf0eJofLy7J=s68-c-k-c0x00ffffff-no-rj",
+              "url": "${ImageUrl}",
               "size": "Small"
             }
           ],
@@ -24,14 +23,6 @@
               "type": "TextBlock",
               "weight": "Bolder",
               "text": "${DisplayName}",
-              "wrap": true
-            },
-            {
-              "type": "TextBlock",
-              "spacing": "None",
-              //"text": "${Position}",
-              "text": "Position",
-              "isSubtle": true,
               "wrap": true
             },
             {
