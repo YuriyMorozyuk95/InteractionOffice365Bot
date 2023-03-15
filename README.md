@@ -10,10 +10,9 @@ Technical summary
 
 Main project dependencies:
 -	.NET 7
--	Asp.Net Core 5
+-	Asp.Net Core 7
 -	Microsoft.Graph 4.54 
--	Microsoft.Bot.Builder.AI.Luis 4.19.3
--	LUIS 4.19.3
+-	Azure Cognitive Services Luis 4.19.3
 
 
 Team:
