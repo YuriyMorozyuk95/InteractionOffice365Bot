@@ -9,6 +9,7 @@ namespace InteractionOfficeBot.WebApi.Services
 	{
 		ConversationState ConversationState { get; }
 		UserState UserState { get; }
+
 		IStatePropertyAccessor<UserTokeStore> UserTokeStoreAccessor { get; }
 		IStatePropertyAccessor<DialogState> DialogStateAccessor { get; }
 		IStatePropertyAccessor<DateTime> LastAccessedTimeAccessor {get;}

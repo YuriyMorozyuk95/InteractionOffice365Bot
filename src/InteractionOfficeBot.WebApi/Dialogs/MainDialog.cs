@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using InteractionOfficeBot.Core.Exception;
 using InteractionOfficeBot.Core.Model;
 using InteractionOfficeBot.Core.MsGraph;
+using InteractionOfficeBot.WebApi.Helper;
 using InteractionOfficeBot.WebApi.Services;
 
 using Microsoft.Bot.Builder;
@@ -48,6 +49,7 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 		private readonly IStateService _stateService;
 		private readonly IGraphServiceClientFactory _graphServiceClient;
 		private readonly ILuisService _luisService;
+		private readonly IGraphDialogHelper _graphDialogHelper;
 		private readonly int _expireAfterMinutes;
 
 		public MainDialog(
@@ -55,13 +57,15 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 			ILogger<MainDialog> logger,
 			IStateService stateService,
 			IGraphServiceClientFactory graphServiceClient,
-			ILuisService luisService)
+			ILuisService luisService,
+			IGraphDialogHelper graphDialogHelper)
 			: base(nameof(MainDialog), configuration["ConnectionName"])
 		{
 			_logger = logger;
 			_stateService = stateService;
 			_graphServiceClient = graphServiceClient;
 			_luisService = luisService;
+			_graphDialogHelper = graphDialogHelper;
 			_expireAfterMinutes = configuration.GetValue<int>("ExpireAfterMinutes");
 
 			AddDialog(new OAuthPrompt(
@@ -136,13 +140,10 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 				await _stateService.UserTokeStoreAccessor.SetAsync(stepContext.Context, userTokeStore, cancellationToken);
 
 				// Pull in the data from the Microsoft Graph.
-				//TODO Try Put GraphClient to UserTokenStore
 				var client = _graphServiceClient.CreateClientFromUserBeHalf(tokenResponse.Token);
 				var me = await client.GetMeAsync();
-				var title = !string.IsNullOrEmpty(me.JobTitle) ?
-							me.JobTitle : "Unknown";
 
-				await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName}); you job title is: {title}", cancellationToken: cancellationToken);
+				await stepContext.Context.SendActivityAsync($"You're logged in as {me.DisplayName} ({me.UserPrincipalName})", cancellationToken: cancellationToken);
 
 				return await stepContext.PromptAsync(GraphDialog, new PromptOptions { Prompt = MessageFactory.Text("How I can help you?") }, cancellationToken);
 			}
@@ -153,673 +154,73 @@ namespace InteractionOfficeBot.WebApi.Dialogs
 
 		private async Task<DialogTurnResult> GraphActionStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
 		{
-			var result = (string)stepContext.Result;
-
 			var recognizeResult = await _luisService.Recognize(stepContext.Context, cancellationToken);
 			var topIntent = recognizeResult.TopIntent();
 
 			switch (topIntent.intent)
 			{
 				case LuisRoot.Intent.ALL_USER_REQUEST:
-					await ShowAllUsers(stepContext, cancellationToken);
+					await _graphDialogHelper.ShowAllUsers(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.ALL_TEAMS_REQUEST:
-					await ShowAllTeams(stepContext, cancellationToken);
+					await _graphDialogHelper.ShowAllTeams(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.WHO_OF_TEAMS_REQUEST:
-					{
-						await MemeberOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
-						break;
-					}
+					await _graphDialogHelper.MemeberOfTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
+					break;
 				case LuisRoot.Intent.WHAT_CHANNELS_OF_TEAMS_REQUEST:
-					await ChanelOfTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
+					await _graphDialogHelper.ChanelOfTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.CREATE_TEAM:
-					await CreateTeamFor(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetUserFromEntity(recognizeResult));
+					await _graphDialogHelper.CreateTeamFor(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult), LuisEntityHelper.GetUserFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.CREATE_CHANNEL:
-					await CreateChanelForTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					await _graphDialogHelper.CreateChanelForTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult), LuisEntityHelper.GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.MEMBER_CHANNEL:
-					await MemberOfChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					await _graphDialogHelper.MemberOfChanel(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult), LuisEntityHelper.GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.REMOVE_CHANNEL:
-					await RemoveChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult));
+					await _graphDialogHelper.RemoveChanel(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult), LuisEntityHelper.GetChannelFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.REMOVE_TEAM:
-					await RemoveTeam(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult));
+					await _graphDialogHelper.RemoveTeam(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.SEND_MESSAGE_TO_CHANEL:
-					await SendMessageToChanel(stepContext, cancellationToken, GetTeamFromEntity(recognizeResult), GetChannelFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
+					await _graphDialogHelper.SendMessageToChanel(stepContext, cancellationToken, LuisEntityHelper.GetTeamFromEntity(recognizeResult), LuisEntityHelper.GetChannelFromEntity(recognizeResult), LuisEntityHelper.GetMessageFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.SEND_EMAIL_TO_USER:
-					await SendEmailToUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult), GetEmailSubjectFromEntity(recognizeResult), GetMessageFromEntity(recognizeResult));
+					await _graphDialogHelper.SendEmailToUser(stepContext, cancellationToken, LuisEntityHelper.GetUserFromEntity(recognizeResult), LuisEntityHelper.GetEmailSubjectFromEntity(recognizeResult), LuisEntityHelper.GetMessageFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.INSTALLED_APP_FOR_USER:
-					await ShowInstalledAppForUser(stepContext, cancellationToken, GetUserFromEntity(recognizeResult));
+					await _graphDialogHelper.ShowInstalledAppForUser(stepContext, cancellationToken, LuisEntityHelper.GetUserFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.ONEDRIVE_ROOT_CONTENTS:
-					await ShowOneDriveContents(stepContext, cancellationToken);
+					await _graphDialogHelper.ShowOneDriveContents(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.ONEDRIVE_FOLDER_CONTENTS:
-					await ShowOneDriveFolderContents(stepContext, cancellationToken, GetFolderPathFromEntity(recognizeResult));
+					await _graphDialogHelper.ShowOneDriveFolderContents(stepContext, cancellationToken, LuisEntityHelper.GetFolderPathFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.ONEDRIVE_SEARCH:
-					await SearchOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					await _graphDialogHelper.SearchOneDrive(stepContext, cancellationToken, LuisEntityHelper.GetFileFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.ONEDRIVE_DELETE:
-					await DeleteOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					await _graphDialogHelper.DeleteOneDrive(stepContext, cancellationToken, LuisEntityHelper.GetFileFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.ONEDRIVE_DOWNLOAD:
-					await DownloadOneDrive(stepContext, cancellationToken, GetFileFromEntity(recognizeResult));
+					await _graphDialogHelper.DownloadOneDrive(stepContext, cancellationToken, LuisEntityHelper.GetFileFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.GET_ALL_TODO_TASKS:
-					await GetAllTodoTasks(stepContext, cancellationToken);
+					await _graphDialogHelper.GetAllTodoTasks(stepContext, cancellationToken);
 					break;
 				case LuisRoot.Intent.GET_ALL_TODO_UPCOMING_TASK:
-					await GetTodoUpcomingTask(stepContext, cancellationToken, GetTaskReminderTimeFromEntity(recognizeResult));
+					await _graphDialogHelper.GetTodoUpcomingTask(stepContext, cancellationToken, LuisEntityHelper.GetTaskReminderTimeFromEntity(recognizeResult));
 					break;
 				case LuisRoot.Intent.CREATE_TODO_TASK:
-					await CreateTodoTask(stepContext, cancellationToken, GetTaskTitleFromEntity(recognizeResult), GetTaskReminderTimeFromEntity(recognizeResult));
+					await _graphDialogHelper.CreateTodoTask(stepContext, cancellationToken, LuisEntityHelper.GetTaskTitleFromEntity(recognizeResult), LuisEntityHelper.GetTaskReminderTimeFromEntity(recognizeResult));
 					break;
 			}
 			return await stepContext.BeginDialogAsync(InitialDialogId, null, cancellationToken);
 		}
-
-		#region Helpers
-
-		private static string GetFileFromEntity(LuisRoot recognizeResult)
-		{
-			var team = recognizeResult.Entities
-				?.Files
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (team == null)
-			{
-				throw new TeamsException("Can't recognize file");
-			}
-
-			return team;
-		}
-
-		private static string GetFolderPathFromEntity(LuisRoot recognizeResult)
-		{
-			var team = recognizeResult.Entities
-				?.Folder
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (team == null)
-			{
-				throw new TeamsException("Can't recognize folder");
-			}
-
-			return team;
-		}
-
-		private static string GetTeamFromEntity(LuisRoot recognizeResult)
-		{
-			var team = recognizeResult.Entities
-				?.Team
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (team == null)
-			{
-				throw new TeamsException("Can't recognize team");
-			}
-
-			return team;
-		}
-
-		private static string GetChannelFromEntity(LuisRoot recognizeResult)
-		{
-			var channel = recognizeResult.Entities
-				?.Channel
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (channel == null)
-			{
-				throw new TeamsException("Can't recognize channel");
-			}
-
-			return channel;
-		}
-
-		private static string GetUserFromEntity(LuisRoot recognizeResult)
-		{
-			var channel = recognizeResult.Entities
-				?.User
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (channel == null)
-			{
-				throw new TeamsException("Can't recognize user email");
-			}
-
-			return channel;
-		}
-
-		private static string GetMessageFromEntity(LuisRoot recognizeResult)
-		{
-			var channel = recognizeResult.Entities
-				?.Message
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (channel == null)
-			{
-				throw new TeamsException("Can't recognize message");
-			}
-
-			return channel;
-		}
-
-		private static string GetEmailSubjectFromEntity(LuisRoot recognizeResult)
-		{
-			var channel = recognizeResult.Entities
-				?.EmailSubject
-				?.FirstOrDefault()
-				?.Value
-				?.FirstOrDefault();
-
-			if (channel == null)
-			{
-				throw new TeamsException("Can't recognize message");
-			}
-
-			return channel;
-		}
-
-        private static string GetTaskTitleFromEntity(LuisRoot recognizeResult)
-        {
-            var title = recognizeResult.Entities
-                ?.Title
-                ?.FirstOrDefault()
-                ?.Value
-                ?.FirstOrDefault();
-
-            if (title == null)
-            {
-                throw new TeamsException("Can't recognize task");
-            }
-
-            return title;
-        }
-
-        private static DateTime? GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
-        {
-            var reminderTime = recognizeResult.Entities
-                ?.ReminderTime
-                ?.FirstOrDefault()
-                ?.Value
-                ?.FirstOrDefault();
-
-            if (reminderTime == null)
-            {
-                throw new TeamsException("Can't recognize reminder time");
-			}
-
-
-
-            var dt = AiRecognizer.RecognizeDateTime(reminderTime, out _);
-
-            return dt;
-        }
-
-        #endregion
-
-        #region GraphMessageHandlers
-        private async Task ShowInstalledAppForUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string email)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IUserTeamworkInstalledAppsCollectionPage apps;
-			try
-			{
-				apps = await client.Teams.GetInstalledAppForUser(email);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			foreach (var channel in apps)
-			{
-				var appInfo = channel.TeamsApp.DisplayName + " app id: " + channel.Id;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(appInfo), cancellationToken);
-			}
-
-		}
-
-		private async Task SendEmailToUser(WaterfallStepContext stepContext, CancellationToken cancellationToken, string emailTo, string subject, string message)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-			var me = await client.GetMeAsync();
-
-			try
-			{
-				await client.SendMailAsync(emailTo, subject, message);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Email to user {emailTo} was send from {me.UserPrincipalName}"), cancellationToken);
-		}
-
-		private async Task SendMessageToChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName, string message)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.Teams.SendMessageToChanel(teamName, channelName, message);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Message was send"), cancellationToken);
-		}
-
-		private async Task RemoveTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.Teams.RemoveTeam(teamName);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} was removed"), cancellationToken);
-		}
-
-		private async Task RemoveChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.Teams.RemoveChannelFromTeam(teamName, channelName);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was removed"), cancellationToken);
-		}
-
-		private async Task MemberOfChanel(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IEnumerable<TeamsUserInfo> users;
-			try
-			{
-				users = await client.Teams.GetMembersOfChannelFromTeam(teamName, channelName);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			foreach (var user in users)
-			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
-			}
-		}
-
-		private async Task CreateChanelForTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string channelName)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.Teams.CreateChannelForTeam(teamName, channelName);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Channel with name: {channelName} for team: {teamName} was created"), cancellationToken);
-		}
-
-		private async Task CreateTeamFor(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName, string userEmail)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.Teams.CreateTeamFor(teamName, userEmail);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text($"Team with name: {teamName} for {userEmail} was created"), cancellationToken);
-		}
-
-		private async Task ChanelOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string teamName)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			ITeamChannelsCollectionPage channels;
-			try
-			{
-				channels = await client.Teams.GetChannelsOfTeams(teamName);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			foreach (var channel in channels)
-			{
-				var chanelInfo = channel.DisplayName + "\nLink: " + channel.WebUrl;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(chanelInfo), cancellationToken);
-			}
-		}
-
-		private async Task MemeberOfTeam(WaterfallStepContext stepContext, CancellationToken cancellationToken, string testTeam)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IEnumerable<TeamsUserInfo> users;
-			try
-			{
-				users = await client.Teams.GetMembersOfTeams(testTeam);
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			foreach (var user in users)
-			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
-			}
-		}
-
-		private async Task ShowAllTeams(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IGraphServiceGroupsCollectionPage teams;
-			try
-			{
-				teams = await client.Teams.GetListTeams();
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-			foreach (var team in teams)
-			{
-				var teamInfo = team.DisplayName + "Description: " + team.Description;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(teamInfo), cancellationToken);
-			}
-		}
-
-		private async Task ShowAllUsers(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IEnumerable<TeamsUserInfo> users;
-			try
-			{
-				users = await client.GetUsers();
-			}
-			catch (TeamsException e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			foreach (var user in users)
-			{
-				var userInfo = user.DisplayName + " : " + user.Activity + " " + user.ColorEmoji;
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(userInfo), cancellationToken);
-			}
-		}
-
-		private async Task ShowOneDriveContents(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IDriveItemChildrenCollectionPage driveItems;
-
-			try
-			{
-				driveItems = await client.OneDrive.GetRootContents();
-			}
-			catch (Exception e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-            var sb = new StringBuilder();
-
-            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
-            {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
-                sb.Append(displayString);
-                sb.Append(Environment.NewLine);
-                sb.Append(Environment.NewLine);
-            }
-
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
-        }
-
-		private async Task ShowOneDriveFolderContents(WaterfallStepContext stepContext, CancellationToken cancellationToken, string folderPath)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IDriveItemChildrenCollectionPage driveItems;
-
-			try
-			{
-				driveItems = await client.OneDrive.GetFolderContents(folderPath);
-			}
-			catch (Exception e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-            var sb = new StringBuilder();
-
-            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
-            {
-                var displayString = driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name;
-                sb.Append(displayString);
-                sb.Append(Environment.NewLine);
-                sb.Append(Environment.NewLine);
-            }
-
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
-        }
-
-		private async Task SearchOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string searchText)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			IEnumerable<DriveItem> driveItems;
-
-			try
-			{
-				driveItems = await client.OneDrive.SearchOneDrive(searchText);
-			}
-			catch (Exception e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-            var sb = new StringBuilder();
-
-            foreach (var driveItem in driveItems.Where(x => x.File != null || x.Folder != null).OrderBy(x => x.File != null ? 1 : 0))
-            {
-                var displayString = Path.Combine(driveItem.ParentReference.Path, driveItem.Folder != null ? $"{driveItem.Name}\\" : driveItem.Name);
-                sb.Append(displayString);
-                sb.Append(Environment.NewLine);
-                sb.Append(Environment.NewLine);
-            }
-
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text(sb.ToString()), cancellationToken);
-        }
-
-		private async Task DeleteOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			try
-			{
-				await client.OneDrive.RemoveFile(filePath);
-			}
-			catch (Exception e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			var response = $"{filePath} deleted.";
-			await stepContext.Context.SendActivityAsync(MessageFactory.Text(response), cancellationToken);
-		}
-
-		private async Task DownloadOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath)
-		{
-			var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-			var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-			DriveItem file;
-
-            try
-			{
-				file = await client.OneDrive.GetFile(filePath);
-			}
-			catch (Exception e)
-			{
-				await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-				return;
-			}
-
-			var reply = MessageFactory.Text($"<a href=\"{file.WebUrl}\">{file.Name}</a>");
-
-			await stepContext.Context.SendActivityAsync(reply, cancellationToken);
-		}
-
-        private async Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-            List<TodoTaskEntity> todoTask;
-            try
-            {
-                todoTask = await client.TodoTask.GetTodoTasks();
-            }
-            catch (TeamsException e)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-                return;
-            }
-            foreach (var task in todoTask)
-            {
-                var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
-            }
-        }
-
-        private async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime? reminderTime)
-        {
-            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-            List<TodoTaskEntity> upcomingTodoTask;
-            try
-            {
-                upcomingTodoTask = await client.TodoTask.GetUpcomingTodoTasks(reminderTime);
-            }
-            catch (TeamsException e)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-                return;
-            }
-            foreach (var task in upcomingTodoTask)
-            {
-                var taskInfo = task.Title + " Status: " + task.Status + " ReminderDateTime: " + task.ReminderDateTime;
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text(taskInfo), cancellationToken);
-            }
-        }
-
-        private async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime? reminderTime)
-        {
-            var userTokeStore = await _stateService.UserTokeStoreAccessor.GetAsync(stepContext.Context, () => new UserTokeStore(), cancellationToken);
-            var client = _graphServiceClient.CreateClientFromUserBeHalf(userTokeStore.Token);
-
-            try
-            {
-                await client.TodoTask.CreateTodoTask(title, reminderTime);
-            }
-            catch (TeamsException e)
-            {
-                await stepContext.Context.SendActivityAsync(MessageFactory.Text(e.Message), cancellationToken);
-                return;
-            }
-
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text($"ToDo Task with title: {title} was created"), cancellationToken);
-        }
-
-
-        #endregion GraphMessageHandlers
-    }
+	}
 }
