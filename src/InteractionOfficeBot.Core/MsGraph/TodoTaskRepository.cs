@@ -27,13 +27,27 @@ public class TodoTaskRepository
         return todoTask;
     }
 
-    public async Task<List<TodoTaskEntity>> GetUpcomingTodoTasks(DateTime? reminderTime)
+    public async Task<List<TodoTaskEntity>> GetUpcomingTodoTasks(DateTime reminderTime)
     {
+        // TODO: Get users timezone
+        var userTimeZone = "Pacific Standard Time";
+
+        var reminderTimeUtc = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(reminderTime, userTimeZone, "UTC");
+
+		var dueDateFrom = reminderTimeUtc.ToString("u");
+        var duDateTo = reminderTimeUtc.AddDays(1).ToString("u");
+
         var listId = await GetListId();
-        var result = await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().GetAsync();
+        var result = await _graphServiceClient
+	        .Me
+	        .Todo
+	        .Lists[listId]
+	        .Tasks
+	        .Request()
+	        .Filter($"dueDateTime/dateTime gt '{dueDateFrom}' and dueDateTime/dateTime lt '{duDateTo}'")
+	        .GetAsync();
 
         var upcomingTasks = result
-	        .Where(x => x.AdditionalData.Values.FirstOrDefault() == DateTimeTimeZone.FromDateTime(reminderTime?.Date ?? DateTime.Today))
             .Select(x => new TodoTaskEntity
             {
                 Title = x.Title,
@@ -44,8 +58,11 @@ public class TodoTaskRepository
         return upcomingTasks;
     }
 
-    public async Task CreateTodoTask(string title, DateTime? reminderTime)
+    public async Task CreateTodoTask(string title, DateTime reminderTime)
     {
+        // TODO: Get users timezone
+        var userTimeZone = "Pacific Standard Time";
+
         var listId = await GetListId();
         var requestBody = new TodoTask
         {
@@ -56,16 +73,16 @@ public class TodoTaskRepository
             },
             Importance = Importance.High,
             IsReminderOn = true,
-            ReminderDateTime = DateTimeTimeZone.FromDateTime(reminderTime ?? DateTime.Today, "Pacific Standard Time")
+            DueDateTime = DateTimeTimeZone.FromDateTime(reminderTime, userTimeZone)
         };
 
         await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().AddAsync(requestBody);
     }
 
-    private async Task<string> GetListId()
+    private async Task<string?> GetListId()
     {
         var list = await _graphServiceClient.Me.Todo.Lists.Request().GetAsync();
-        var listId = list.FirstOrDefault().Id;
+        var listId = list.FirstOrDefault()?.Id;
         return listId;
     }
 }
