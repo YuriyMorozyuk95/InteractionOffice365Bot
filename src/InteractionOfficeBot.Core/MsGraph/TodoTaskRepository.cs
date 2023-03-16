@@ -1,5 +1,6 @@
 ﻿using InteractionOfficeBot.Core.Model;
 using Microsoft.Graph;
+using Microsoft.Graph.Extensions;
 
 namespace InteractionOfficeBot.Core.MsGraph;
 
@@ -20,7 +21,7 @@ public class TodoTaskRepository
         var todoTask = result.Select(x => new TodoTaskEntity
         {
             Title = x.Title,
-            ReminderDateTime = x.ReminderDateTime,
+            ReminderDateTime = x.ReminderDateTime.ToDateTime(),
             Status = x.Status,
         }).ToList();
 
@@ -51,7 +52,7 @@ public class TodoTaskRepository
             .Select(x => new TodoTaskEntity
             {
                 Title = x.Title,
-                ReminderDateTime = x.ReminderDateTime,
+                ReminderDateTime = x.ReminderDateTime.ToDateTime(),
                 Status = x.Status,
             }).ToList();
 

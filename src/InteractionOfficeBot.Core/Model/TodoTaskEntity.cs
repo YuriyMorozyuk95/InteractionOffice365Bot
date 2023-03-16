@@ -7,7 +7,7 @@ namespace InteractionOfficeBot.Core.Model
     {
         public string? Title { get; set; }
 
-        public DateTimeTimeZone? ReminderDateTime { get; set; }
+        public DateTime? ReminderDateTime { get; set; }
 
         public TaskStatus? Status { get; set; }
     }
