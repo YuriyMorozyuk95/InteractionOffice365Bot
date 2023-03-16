@@ -5,9 +5,9 @@ namespace InteractionOfficeBot.Core.Model
 {
     public class TodoTaskEntity
     {
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
-        public DateTimeTimeZone ReminderDateTime { get; set; }
+        public DateTimeTimeZone? ReminderDateTime { get; set; }
 
         public TaskStatus? Status { get; set; }
     }

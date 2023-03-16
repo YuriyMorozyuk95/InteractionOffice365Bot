@@ -129,7 +129,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			return title;
 		}
-		public static DateTime? GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
+		public static DateTime GetTaskReminderTimeFromEntity(LuisRoot recognizeResult)
 		{
 			var reminderTime = recognizeResult.Entities
 				?.ReminderTime
