@@ -41,8 +41,8 @@ namespace InteractionOfficeBot.WebApi.Helper
 		Task DeleteOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath);
 		Task DownloadOneDrive(WaterfallStepContext stepContext, CancellationToken cancellationToken, string filePath);
 		Task GetAllTodoTasks(WaterfallStepContext stepContext, CancellationToken cancellationToken);
-		Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime? reminderTime);
-		Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime? reminderTime);
+		Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime reminderTime);
+		Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime reminderTime);
 	}
 	internal class GraphDialogHelper : IGraphDialogHelper
 	{
@@ -486,7 +486,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 			}
 		}
 
-		public async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime? reminderTime)
+		public async Task GetTodoUpcomingTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, DateTime reminderTime)
 		{
 			var client = await GetClient(stepContext, cancellationToken);
 
@@ -507,7 +507,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 			}
 		}
 
-		public async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime? reminderTime)
+		public async Task CreateTodoTask(WaterfallStepContext stepContext, CancellationToken cancellationToken, string title, DateTime reminderTime)
 		{
 			var client = await GetClient(stepContext, cancellationToken);
 
