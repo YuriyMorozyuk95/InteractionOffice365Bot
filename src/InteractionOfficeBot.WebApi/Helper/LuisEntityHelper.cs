@@ -139,10 +139,10 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			if (reminderTime == null)
 			{
-				var reminderTime = recognizeResult.Entities
+				reminderTime = recognizeResult.Entities
 					?.datetime
 					?.FirstOrDefault()
-					?.Value
+					?.Expressions
 					?.FirstOrDefault();
 			}
 
