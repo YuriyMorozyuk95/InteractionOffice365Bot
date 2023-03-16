@@ -21,7 +21,7 @@ public class TodoTaskRepository
         var todoTask = result.Select(x => new TodoTaskEntity
         {
             Title = x.Title,
-            ReminderDateTime = x.ReminderDateTime.ToDateTime(),
+            ReminderDateTime = x.ReminderDateTime?.ToDateTime(),
             Status = x.Status,
         }).ToList();
 
@@ -52,7 +52,7 @@ public class TodoTaskRepository
             .Select(x => new TodoTaskEntity
             {
                 Title = x.Title,
-                ReminderDateTime = x.ReminderDateTime.ToDateTime(),
+                ReminderDateTime = x.ReminderDateTime?.ToDateTime(),
                 Status = x.Status,
             }).ToList();
 
