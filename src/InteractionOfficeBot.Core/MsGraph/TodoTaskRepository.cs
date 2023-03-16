@@ -35,8 +35,8 @@ public class TodoTaskRepository
 
         var reminderTimeUtc = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(reminderTime, userTimeZone, "UTC");
 
-		var dueDateFrom = reminderTimeUtc.ToString("u");
-        var duDateTo = reminderTimeUtc.AddDays(1).ToString("u");
+		var reminderDateTimeFrom = reminderTimeUtc.ToString("u");
+        var reminderDateTimeTo = reminderTimeUtc.AddDays(1).ToString("u");
 
         var listId = await GetListId();
         var result = await _graphServiceClient
@@ -45,7 +45,7 @@ public class TodoTaskRepository
 	        .Lists[listId]
 	        .Tasks
 	        .Request()
-	        .Filter($"reminderDateTime/dateTime gt '{dueDateFrom}' and reminderDateTime/dateTime lt '{duDateTo}'")
+	        .Filter($"reminderDateTime/dateTime gt '{reminderDateTimeFrom}' and reminderDateTime/dateTime lt '{reminderDateTimeTo}'")
 	        .GetAsync();
 
         var upcomingTasks = result
@@ -74,7 +74,7 @@ public class TodoTaskRepository
             },
             Importance = Importance.High,
             IsReminderOn = true,
-            DueDateTime = DateTimeTimeZone.FromDateTime(reminderTime, userTimeZone)
+            ReminderDateTime = DateTimeTimeZone.FromDateTime(reminderTime, userTimeZone)
         };
 
         await _graphServiceClient.Me.Todo.Lists[listId].Tasks.Request().AddAsync(requestBody);

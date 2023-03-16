@@ -139,7 +139,11 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 			if (reminderTime == null)
 			{
-				throw new TeamsException("Can't recognize reminder time");
+				var reminderTime = recognizeResult.Entities
+					?.datetime
+					?.FirstOrDefault()
+					?.Value
+					?.FirstOrDefault();
 			}
 
 
