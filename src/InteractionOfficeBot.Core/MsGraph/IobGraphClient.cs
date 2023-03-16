@@ -39,7 +39,6 @@ namespace InteractionOfficeBot.Core.MsGraph
             get { return _todoGroupRepository ??= new TodoTaskRepository(_graphClient); }
         }
 
-        // Sends an email on the users behalf using the Microsoft Graph API
         public async Task SendMailAsync(string toAddress, string subject, string content)
         {
             if (string.IsNullOrWhiteSpace(toAddress))
@@ -98,44 +97,6 @@ namespace InteractionOfficeBot.Core.MsGraph
             return me;
         }
 
-        // Get information about the user.
-        public async Task<IEnumerable<TeamsUserInfo>> GetUsers()
-        {
-	        var users = await _graphClient.Users
-		        .Request()
-		        .GetAsync();;
-
-	        var result = await _graphClient.Communications.GetPresencesByUserId(users.Select(x => x.Id)).Request().PostAsync();
-
-	        var list = new List<TeamsUserInfo>();
-	        foreach (var user in users)
-	        {
-		        byte[] imageBytes;
-		        try
-		        {
-			        var photoStream = await _graphClient.Users[user.Id].Photo.Content.Request().GetAsync();
-			        imageBytes = new byte[photoStream.Length];
-			        await photoStream.ReadAsync(imageBytes, 0, imageBytes.Length);
-		        }
-		        catch
-		        {
-			        var path = Path.Combine(Environment.CurrentDirectory, @"Img", "FunnyAvatar.png");
-			        imageBytes = await File.ReadAllBytesAsync(path);
-		        }
-
-		        string actualUrl = "data:image/gif;base64," + Convert.ToBase64String(imageBytes);
-
-		        list.Add(new TeamsUserInfo
-		        {
-			        DisplayName = user.DisplayName,
-			        Activity = result.FirstOrDefault(m => user.Id == m.Id)?.Activity,
-			        ImageUrl = actualUrl,
-		        });
-	        }
-
-	        return list.OrderBy(x => x.Activity);
-        }
-
         public async Task<User> GetMyUsers()
         {
 	        return await _graphClient.Users["yurii.moroziuk.iob@8bpskq.onmicrosoft.com"].Request().GetAsync();
@@ -147,39 +108,5 @@ namespace InteractionOfficeBot.Core.MsGraph
             var manager = await _graphClient.Me.Manager.Request().GetAsync() as User;
             return manager;
         }
-
-        // // Gets the user's photo
-        // public async Task<PhotoResponse> GetPhotoAsync()
-        // {
-        //     HttpClient client = new HttpClient();
-        //     client.DefaultRequestHeaders.Add("Authorization", "Bearer " + _token);
-        //     client.DefaultRequestHeaders.Add("Accept", "application/json");
-
-        //     using (var response = await client.GetAsync("https://graph.microsoft.com/v1.0/me/photo/$value"))
-        //     {
-        //         if (!response.IsSuccessStatusCode)
-        //         {
-        //             throw new HttpRequestException($"Graph returned an invalid success code: {response.StatusCode}");
-        //         }
-
-        //         var stream = await response.Content.ReadAsStreamAsync();
-        //         var bytes = new byte[stream.Length];
-        //         stream.Read(bytes, 0, (int)stream.Length);
-
-        //         var photoResponse = new PhotoResponse
-        //         {
-        //             Bytes = bytes,
-        //             ContentType = response.Content.Headers.ContentType?.ToString(),
-        //         };
-
-        //         if (photoResponse != null)
-        //         {
-        //             photoResponse.Base64String = $"data:{photoResponse.ContentType};base64," +
-        //                                          Convert.ToBase64String(photoResponse.Bytes);
-        //         }
-
-        //         return photoResponse;
-        //     }
-        // }
     }
 }

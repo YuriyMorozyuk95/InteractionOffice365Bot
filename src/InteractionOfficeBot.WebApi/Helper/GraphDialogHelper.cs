@@ -280,7 +280,7 @@ namespace InteractionOfficeBot.WebApi.Helper
 			IEnumerable<TeamsUserInfo> users;
 			try
 			{
-				users = await client.GetUsers();
+				users = await client.Teams.GetUsers();
 			}
 			catch (TeamsException e)
 			{

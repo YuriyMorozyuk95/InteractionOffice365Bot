@@ -28,7 +28,7 @@ namespace InteractionOfficeBot.Console
             IEnumerable<TeamsUserInfo> users;
             try
             {
-	            users = await client.GetUsers();
+	            users = await client.Teams.GetMembersOfTeams("Retail");
             }
             catch (TeamsException e)
             {
