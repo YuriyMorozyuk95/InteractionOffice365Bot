@@ -45,7 +45,7 @@ public class TodoTaskRepository
 	        .Lists[listId]
 	        .Tasks
 	        .Request()
-	        .Filter($"dueDateTime/dateTime gt '{dueDateFrom}' and dueDateTime/dateTime lt '{duDateTo}'")
+	        .Filter($"reminderDateTime/dateTime gt '{dueDateFrom}' and reminderDateTime/dateTime lt '{duDateTo}'")
 	        .GetAsync();
 
         var upcomingTasks = result
