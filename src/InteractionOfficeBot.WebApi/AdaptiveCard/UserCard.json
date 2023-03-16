@@ -26,14 +26,31 @@
               "wrap": true
             },
             {
-              "type": "TextBlock",
-              "text": "${ColorEmoji}",
-              "wrap": true
-            },
-            {
-              "type": "TextBlock",
-              "text": "${Activity}",
-              "wrap": true
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "width": "auto",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${ColorEmoji}",
+                      "wrap": true
+                    }
+                  ]
+                },
+                {
+                  "type": "Column",
+                  "width": "stretch",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${Activity}",
+                      "wrap": true
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "width": "stretch"

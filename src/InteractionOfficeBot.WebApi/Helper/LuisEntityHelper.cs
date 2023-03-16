@@ -145,7 +145,6 @@ namespace InteractionOfficeBot.WebApi.Helper
 
 
 			var dt = AiRecognizer.RecognizeDateTime(reminderTime, out _);
-
 			return dt;
 		}
 	}

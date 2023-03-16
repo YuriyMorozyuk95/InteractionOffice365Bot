@@ -123,7 +123,7 @@ namespace InteractionOfficeBot.Core.MsGraph
 			        imageBytes = await File.ReadAllBytesAsync(path);
 		        }
 
-		        string actualUrl = "data:image/gif;base64," + string.Join("", imageBytes);
+		        string actualUrl = "data:image/gif;base64," + Convert.ToBase64String(imageBytes);
 
 		        list.Add(new TeamsUserInfo
 		        {
